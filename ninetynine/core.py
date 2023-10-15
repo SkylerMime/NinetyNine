@@ -81,6 +81,3 @@ class GameState:
 
     #     except KeyError:
     #         raise
-
-    def __init__(self):
-        startNewGame()
