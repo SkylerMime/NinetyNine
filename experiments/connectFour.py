@@ -23,6 +23,7 @@ def printBoard(board: Board):
         for col in range(NUM_COLUMNS):
             print(board[row][col], end='')
         print() # newline
+    print("0123456")
 
 def copyBoard(board: Board):
     # Uses list slicing to make a deep copy of the board
