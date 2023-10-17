@@ -35,15 +35,15 @@ class TestBoardSetup(unittest.TestCase):
         self.comparisonBoard[game.NUM_ROWS - 2][1] = 'X'
 
     def test_makeMove(self):
-        game.makeMove('X', game.NUM_COLUMNS - 1, self.board0)
+        self.board0 = game.makeMove('X', game.NUM_COLUMNS - 1, self.board0)
         self.assertEqual(self.board0, self.board1, 'wrong board after adding to an empty board')
     
-        game.makeMove('O', game.NUM_COLUMNS - 1, self.board1)
+        self.board1 = game.makeMove('O', game.NUM_COLUMNS - 1, self.board1)
         self.assertEqual(self.board1, self.board2, 'wrong board after adding to a column with an X')
 
-        game.makeMove('X', 0, self.winXBoard)
-        game.makeMove('O', 1, self.winXBoard)
-        game.makeMove('X', 1, self.winXBoard)
+        self.winXBoard = game.makeMove('X', 0, self.winXBoard)
+        self.winXBoard = game.makeMove('O', 1, self.winXBoard)
+        self.winXBoard = game.makeMove('X', 1, self.winXBoard)
 
         self.assertEqual(self.winXBoard, self.comparisonBoard, 'wrong board after three moves')
 
@@ -51,6 +51,10 @@ class TestBoardSetup(unittest.TestCase):
             game.makeMove('O', game.NUM_COLUMNS, self.board1)
         with self.assertRaises(ValueError):
             game.makeMove('O', 2, self.fullColBoard)
+
+    def test_makeMove_hasNoSideEffects(self):
+        newBoard = game.makeMove('X', 0, self.board0)
+        self.assertNotEqual(self.board0, newBoard)
             
     def test_hasWon(self):
         self.assertTrue(game.hasWon('O', self.winOBoard))
@@ -58,16 +62,16 @@ class TestBoardSetup(unittest.TestCase):
 
         # board with diagonal 'X' win
         self.winXBoard = game.newBoard()
-        game.makeMove('X', 0, self.winXBoard)
-        game.makeMove('O', 1, self.winXBoard)
-        game.makeMove('X', 1, self.winXBoard)
-        game.makeMove('O', 2, self.winXBoard)
-        game.makeMove('O', 2, self.winXBoard)
-        game.makeMove('X', 2, self.winXBoard)
-        game.makeMove('O', 3, self.winXBoard)
-        game.makeMove('O', 3, self.winXBoard)
-        game.makeMove('O', 3, self.winXBoard)
-        game.makeMove('X', 3, self.winXBoard)
+        self.winXBoard = game.makeMove('X', 0, self.winXBoard)
+        self.winXBoard = game.makeMove('O', 1, self.winXBoard)
+        self.winXBoard = game.makeMove('X', 1, self.winXBoard)
+        self.winXBoard = game.makeMove('O', 2, self.winXBoard)
+        self.winXBoard = game.makeMove('O', 2, self.winXBoard)
+        self.winXBoard = game.makeMove('X', 2, self.winXBoard)
+        self.winXBoard = game.makeMove('O', 3, self.winXBoard)
+        self.winXBoard = game.makeMove('O', 3, self.winXBoard)
+        self.winXBoard = game.makeMove('O', 3, self.winXBoard)
+        self.winXBoard = game.makeMove('X', 3, self.winXBoard)
         print(self.winXBoard)
 
         self.assertTrue(game.hasWon('X', self.winXBoard))

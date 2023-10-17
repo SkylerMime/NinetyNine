@@ -14,58 +14,44 @@ COMPUTER_PLAYER = 'X'
 OPPOSING_PLAYER = 'O'
 UCB_CONSTANT = 0.3 # TODO: I don't actually know what the best value for this constant is
 
-class Stats:
-    def __init__(self):
+# MCST Node
+class Node:
+    def __init__(self, parent: Self):
+        self.parent = parent
+        self.children: list[Self] = []
         self.visits = 1 # Always start with 1 visit (this one)
         self.wins = 0
         self.draws = 0
         self.losses = 0
-        self.meanValue = 0
-        self.ucb = 0
 
-    def updateMeanValue(self):
-        self.meanValue = (self.wins - self.losses) / (self.wins + self.draws + self.losses)
-
-    def updateUcb(self, parentVisits: int):
-        self.ucb = self.meanValue + UCB_CONSTANT * math.sqrt(math.log(parentVisits) / self.visits)
-
-# MCST Node
-class Node:
-    def __init__(self, parent: Self, children: list[Self], stats: Stats):
-        self.parent = parent
-        self.children = children
-        self.stats = stats
+    def isRoot(self):
+        return self.parent == None
 
     def updateStats(self, newResult):
         if newResult == 1:
-            self.stats.wins += 1
+            self.wins += 1
         elif newResult == 0:
-            self.stats.draws += 1
+            self.draws += 1
         elif newResult == -1:
-            self.stats.losses += 1
+            self.losses += 1
         else:
             raise ValueError("unexpected value in result")
-        self.stats.updateMeanValue()
+        
+    def getMeanValue(self):
+        return (self.wins - self.losses) / (self.wins + self.draws + self.losses)
 
-        self.stats.updateUcb(self.parent.stats.visits)
-    
-    def isRoot(self):
-        return self.parent == None
+    def getUcb(self):
+        return self.getMeanValue() + UCB_CONSTANT * math.sqrt(math.log(self.parent.visits) / self.visits)
     
 # Specific node for Connect4 (Inheritance)
-class ConnectFour(Node):
-    def __init__(self, parent: Self, children: list[Self], stats: Stats, boardState: Board, columnDroppedIn: int, activePlayer: str):
-        super().__init__(parent, children, stats)
-        self.boardState = boardState
+class ConnectFourNode(Node):
+    def __init__(self, parent: Self, boardState: Board, columnDroppedIn: int, activePlayer: str):
+        super().__init__(parent)
+        self.boardState = boardState.copy() # we store a copy of the board to prevent side effects
+        self.columnDroppedIn = columnDroppedIn
         self.activePlayer = activePlayer
         self.isFullyExpanded = False
-        # since each turn involves the player dropping a disc into a column, this node stores the column dropped into for this turn
 
-    '''
-    Do expansion by randomly picking a move that hasn't been explored yet from this state
-
-    Raises IndexError if all moves from this state have been explored
-    '''
     def createUnexploredChild(self):
         # Find all the moves that haven't been made yet by the children
         unexploredColumns = list(range(game.NUM_COLUMNS))
@@ -84,11 +70,8 @@ class ConnectFour(Node):
         else:
             nextPlayer = 'X'
 
-        # Create and return this child node
-        newChild = ConnectFour(
+        newChild = ConnectFourNode(
             self,
-            [],
-            None,
             game.makeMove(nextPlayer, moveToMake, self.boardState),
             moveToMake,
             nextPlayer
@@ -96,28 +79,22 @@ class ConnectFour(Node):
         self.children.append(newChild)
         return newChild
     
-    '''
-    Check to see if this move brought the game into a win condition
-
-    Returns true if this move resulted in a win for the active player
-    '''
     def isTerminal(self):
         return game.hasWon(self.activePlayer, self.boardState)
 
-'''
-Get the result of this rollout
-
-Returns +1 for a win for the computer, 0 for a draw, and -1 for a loss for the computer.
-'''
-def result(node: ConnectFour) -> int:
+# Returns +1 for a win for the computer and -1 for a loss for the computer.
+def getRolloutResult(node: ConnectFourNode) -> int:
+    # TODO: Implement draw
     if node.isTerminal():
         if node.activePlayer == COMPUTER_PLAYER:
             return 1
         elif node.activePlayer == OPPOSING_PLAYER:
             return -1
+    else:
+        raise ValueError("node must be terminal")
 
 # main function
-def monteCarloTreeSearch(root: ConnectFour):
+def monteCarloTreeSearch(root: ConnectFourNode):
 
     for iteration in range(MAX_SEARCH_TIME):
         leaf = traverse(root)
@@ -127,16 +104,16 @@ def monteCarloTreeSearch(root: ConnectFour):
     return bestChild(root)
 
 # ranking function helper
-def getUcb(node):
-    return node.stats.ucb
+def getUcb(node: ConnectFourNode):
+    return node.getUcb()
 
 # ranking function
-def bestUcb(children: list[ConnectFour]):
+def bestUcb(children: list[ConnectFourNode]):
     children.sort(key=getUcb)
     return children[0]
 
 # node traversal function
-def traverse(node: ConnectFour):
+def traverse(node: ConnectFourNode):
     while node.isFullyExpanded:
         node = bestUcb(node.children)
 
@@ -150,24 +127,24 @@ def traverse(node: ConnectFour):
 def rollout(node):
     while not node.isTerminal():
         node = rolloutPolicy(node)
-    return result(node)
+    return getRolloutResult(node)
 
 # get a random child node
 def rolloutPolicy(node):
     return random.choice(node.children)
 
 # backpropogation function
-def backpropogate(node: ConnectFour, result):
+def backpropogate(node: ConnectFourNode, result):
     if node.isRoot():
         return
     node.updateStats(result)
     backpropogate(node.parent)
 
-def getNumVisits(node: ConnectFour):
+def getNumVisits(node: ConnectFourNode):
     return node.stats.visits
 
 # select the best child node with the highest number of visits
-def bestChild(node: ConnectFour) -> ConnectFour:
+def bestChild(node: ConnectFourNode) -> ConnectFourNode:
     node.children.sort(key=getNumVisits)
     return node.children[0]
 

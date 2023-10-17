@@ -24,26 +24,32 @@ def printBoard(board: Board):
             print(board[row][col], end='')
         print() # newline
 
-# Update the given board
+def copyBoard(board: Board):
+    # Uses list slicing to make a deep copy of the board
+    return [col[:] for col in board]
+
+# Return a new board with the given move
 def makeMove(player: str, column: int, board: Board):
+    newBoard = copyBoard(board)
     if column >= NUM_COLUMNS:
         raise ValueError(
             "column must be less than the number of columns"
         )
-    if board[0][column] != '_':
+    if newBoard[0][column] != '_':
         raise ValueError(
             "illegal move: column is full"
         )
     
     # if this column is empty, add this piece to the bottom
-    if board[NUM_ROWS - 1][column] == '_':
-        board[NUM_ROWS - 1][column] = player
+    if newBoard[NUM_ROWS - 1][column] == '_':
+        newBoard[NUM_ROWS - 1][column] = player
     # otherwise, find where this piece should drop to
     else:
         for row in range(NUM_ROWS):
-            if board[row][column] != '_':
+            if newBoard[row][column] != '_':
                 # we have found the first non-empty space
-                board[row - 1][column] = player
+                newBoard[row - 1][column] = player
+    return newBoard
 
 # Return true if the given player has won
 def hasWon(player: str, board: Board) -> bool:
