@@ -52,8 +52,9 @@ class TestConnectFour(unittest.TestCase):
         self.root = mcst.ConnectFourNode(None, self.rootBoard, 3, "O")
         
         # initialize randomness for reproducibility
-        random.seed(100)
+        random.seed(300)
         self.initialState = random.getstate()
+        random.setstate(self.initialState)
 
     def test_createUnexploredChild_OfRoot(self):
        # Manual creation (for comparison)
@@ -82,6 +83,18 @@ class TestConnectFour(unittest.TestCase):
         # there are no other unexplored children
         with self.assertRaises(IndexError):
             self.root.createUnexploredChild()
+
+    def test_fillingAColumn_UnexploredChildrenWillYield(self):
+        fullTestBoard = [
+            ['_', 'O', '_', '_', '_', 'O', 'X'],
+            ['_', 'X', '_', '_', '_', 'X', 'O'],
+            ['O', 'O', '_', '_', 'X', 'X', 'O'],
+            ['X', 'X', 'X', 'O', 'O', 'O', 'X'],
+            ['O', 'O', 'X', 'X', 'O', 'X', 'O'],
+            ['X', 'X', 'O', 'X', 'O', 'O', 'X']
+        ]
+        self.root = mcst.ConnectFourNode(None, fullTestBoard, 0, "O")
+        self.root.createUnexploredChild()
 
 
 

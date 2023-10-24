@@ -9,17 +9,17 @@ import random, math
 from connectFour import Board
 import connectFour as game
 
-MAX_SEARCH_TIME = 1000000
+MAX_SEARCH_TIME = 1000
 COMPUTER_PLAYER = 'X'
 OPPOSING_PLAYER = 'O'
-UCB_CONSTANT = 0.3 # TODO: I don't actually know what the best value for this constant is
+UCB_CONSTANT = 1.41 # TODO: I don't actually know what the best value for this constant is
 
 # MCST Node
 class Node:
     def __init__(self, parent: Self):
         self.parent = parent
         self.children: list[Self] = []
-        self.visits = 1 # Always start with 1 visit (this one)
+        self.visits = 0
         self.wins = 0
         self.draws = 0
         self.losses = 0
@@ -38,9 +38,17 @@ class Node:
             raise ValueError("unexpected value in result")
         
     def getMeanValue(self):
+        if self.wins == 0 and self.draws == 0 and self.losses == 0:
+            return 0
         return (self.wins - self.losses) / (self.wins + self.draws + self.losses)
 
     def getUcb(self):
+        if self.parent == None:
+            raise ValueError("ucb called on the root")
+        if self.visits == 0:
+            return math.inf
+        if self.parent.visits == 0:
+            raise ValueError("no parent visits")
         return self.getMeanValue() + UCB_CONSTANT * math.sqrt(math.log(self.parent.visits) / self.visits)
     
 # Specific node for Connect4 (Inheritance)
@@ -53,14 +61,17 @@ class ConnectFourNode(Node):
         self.isFullyExpanded = False
 
     def createUnexploredChild(self):
-        # Find all the moves that haven't been made yet by the children
+        # Find all the moves that haven't been made yet by the children, that don't result in a full column
         unexploredColumns = list(range(game.NUM_COLUMNS))
         for child in self.children:
-            if child.columnDroppedIn in unexploredColumns:
+            if child.columnDroppedIn in unexploredColumns.copy():
                 unexploredColumns.remove(child.columnDroppedIn)
         if len(unexploredColumns) == 0:
             self.isFullyExpanded = True
             raise IndexError("All moves from this state have been explored")
+        for column in unexploredColumns.copy(): # copy is needed for the iteration to work properly
+            if self.boardState[0][column] != '_':
+                unexploredColumns.remove(column)
 
         # Choose a random column to drop the disc into
         moveToMake = random.choice(unexploredColumns)
@@ -80,7 +91,11 @@ class ConnectFourNode(Node):
         return newChild
     
     def isTerminal(self):
-        return game.hasWon(self.activePlayer, self.boardState)
+        if game.hasWon(self.activePlayer, self.boardState):
+            return True
+        if game.isADraw(self.boardState):
+            return True
+        return False
 
 # Returns +1 for a win for the computer and -1 for a loss for the computer.
 def getRolloutResult(node: ConnectFourNode) -> int:
@@ -131,17 +146,20 @@ def rollout(node):
 
 # get a random child node
 def rolloutPolicy(node):
+    if len(node.children) < 1:
+        node.createUnexploredChild()
     return random.choice(node.children)
 
 # backpropogation function
 def backpropogate(node: ConnectFourNode, result):
+    node.updateStats(result)
+    node.visits += 1
     if node.isRoot():
         return
-    node.updateStats(result)
-    backpropogate(node.parent)
+    backpropogate(node.parent, result)
 
 def getNumVisits(node: ConnectFourNode):
-    return node.stats.visits
+    return node.visits
 
 # select the best child node with the highest number of visits
 def bestChild(node: ConnectFourNode) -> ConnectFourNode:

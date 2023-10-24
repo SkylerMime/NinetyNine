@@ -50,13 +50,14 @@ def makeMove(player: str, column: int, board: Board):
             if newBoard[row][column] != '_':
                 # we have found the first non-empty space
                 newBoard[row - 1][column] = player
+                break
     return newBoard
 
 # Return true if the given player has won
 def hasWon(player: str, board: Board) -> bool:
     # Check each horizontal for a four-in-a-row
     for row in board:
-        for columnNum in range (NUM_COLUMNS - 4):
+        for columnNum in range (NUM_COLUMNS - 3):
             if (row[columnNum] == player and
                 row[columnNum + 1] == player and
                 row[columnNum + 2] == player and
@@ -65,7 +66,7 @@ def hasWon(player: str, board: Board) -> bool:
     
     # Check each vertical
     for columnNum in range(NUM_COLUMNS):
-        for rowNum in range(NUM_ROWS - 4):
+        for rowNum in range(NUM_ROWS - 3):
             if (board[rowNum][columnNum] == player and
                 board[rowNum + 1][columnNum] == player and
                 board[rowNum + 2][columnNum] == player and
@@ -92,3 +93,11 @@ def hasWon(player: str, board: Board) -> bool:
             
     # If no win is found...
     return False
+
+def isADraw(board: Board) -> bool:
+    for columnNum in range(NUM_COLUMNS):
+        if board[0][columnNum] == '_':
+            return False
+    if hasWon('X', board) or hasWon('O', board):
+        return False
+    return True

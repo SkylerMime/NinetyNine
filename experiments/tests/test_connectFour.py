@@ -34,6 +34,12 @@ class TestBoardSetup(unittest.TestCase):
         self.comparisonBoard[game.NUM_ROWS - 1][1] = 'O'
         self.comparisonBoard[game.NUM_ROWS - 2][1] = 'X'
 
+        # board with an X O X pattern in row #2
+        self.colTwoComparisonBoard = game.newBoard()
+        self.colTwoComparisonBoard[game.NUM_ROWS - 1][2] = 'X'
+        self.colTwoComparisonBoard[game.NUM_ROWS - 2][2] = 'O'
+        self.colTwoComparisonBoard[game.NUM_ROWS - 3][2] = 'X'
+
     def test_makeMove(self):
         self.board0 = game.makeMove('X', game.NUM_COLUMNS - 1, self.board0)
         self.assertEqual(self.board0, self.board1, 'wrong board after adding to an empty board')
@@ -55,8 +61,15 @@ class TestBoardSetup(unittest.TestCase):
     def test_makeMove_hasNoSideEffects(self):
         newBoard = game.makeMove('X', 0, self.board0)
         self.assertNotEqual(self.board0, newBoard)
+
+    def test_makeMove_leavesColumnUnchanged(self):
+        newBoard = game.makeMove('X', 2, self.board0)
+        newBoard = game.makeMove('O', 2, newBoard)
+        newBoard = game.makeMove('X', 2, newBoard)
+        self.assertEqual(newBoard, self.colTwoComparisonBoard, 'wrong board in a column')
+
             
-    def test_hasWon(self):
+    def test_hasWon_findsDiagonalWin(self):
         self.assertTrue(game.hasWon('O', self.winOBoard))
         self.assertFalse(game.hasWon('X', self.winOBoard))
 
@@ -76,6 +89,41 @@ class TestBoardSetup(unittest.TestCase):
 
         self.assertTrue(game.hasWon('X', self.winXBoard))
         self.assertFalse(game.hasWon('O', self.winXBoard))
+
+    def test_hasWon_findsVerticalWin(self):
+        self.winXBoard = game.newBoard()
+        self.winXBoard = game.makeMove('X', 2, self.winXBoard)
+        self.winXBoard = game.makeMove('X', 2, self.winXBoard)
+        self.winXBoard = game.makeMove('X', 2, self.winXBoard)
+        self.winXBoard = game.makeMove('X', 2, self.winXBoard)
+
+        self.assertTrue(game.hasWon('X', self.winXBoard))
+        self.assertFalse(game.hasWon('O', self.winXBoard))
+
+    def test_hasWon_findsHorizontalWin(self):
+        winOBoard = [
+            ['X', 'X', 'O', 'O', 'X', 'O', 'X'],
+            ['O', 'X', 'X', 'O', 'X', 'X', 'X'],
+            ['O', 'O', 'O', 'X', 'X', 'O', 'O'],
+            ['X', 'X', 'X', 'O', 'O', 'O', 'O'],
+            ['O', 'O', 'X', 'X', 'X', 'O', 'X'],
+            ['X', 'O', 'X', 'O', 'O', 'X', 'O']
+        ]
+
+        self.assertTrue(game.hasWon('O', winOBoard))
+        self.assertFalse(game.hasWon('X', winOBoard))
+
+    def test_isADraw_findsADraw(self):
+        drawBoard = [
+            ['X', 'X', 'O', 'O', 'X', 'O', 'X'],
+            ['O', 'X', 'X', 'O', 'X', 'X', 'X'],
+            ['O', 'O', 'O', 'X', 'X', 'O', 'O'],
+            ['X', 'X', 'X', 'O', 'O', 'O', 'X'],
+            ['O', 'O', 'X', 'X', 'X', 'O', 'X'],
+            ['X', 'O', 'X', 'O', 'O', 'X', 'O']
+        ]
+
+        self.assertTrue(game.isADraw(drawBoard))
 
 if __name__ == '__main__':
     unittest.main()
