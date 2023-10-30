@@ -2,17 +2,20 @@
 Simple Monte Carlo Search Tree
 Implementation based on GeeksForGeeks: https://www.geeksforgeeks.org/ml-monte-carlo-tree-search-mcts/
 This page was helpful as well: https://towardsdatascience.com/monte-carlo-tree-search-an-introduction-503d8c04e168
+And I used this to test to see what I was doing wrong: https://ai-boson.github.io/mcts/
 '''
 
 from typing import Self
 import random, math
 from connectFour import Board
 import connectFour as game
+import numpy as np
 
-MAX_SEARCH_TIME = 1000
+MAX_SEARCH_TIME = 10000
 COMPUTER_PLAYER = 'X'
 OPPOSING_PLAYER = 'O'
-UCB_CONSTANT = 1.41 # TODO: I don't actually know what the best value for this constant is
+TIE_GAME = "DRAW"
+UCB_CONSTANT = 1.41
 
 # MCST Node
 class Node:
@@ -23,24 +26,11 @@ class Node:
         self.wins = 0
         self.draws = 0
         self.losses = 0
-
-    def isRoot(self):
-        return self.parent == None
-
-    def updateStats(self, newResult):
-        if newResult == 1:
-            self.wins += 1
-        elif newResult == 0:
-            self.draws += 1
-        elif newResult == -1:
-            self.losses += 1
-        else:
-            raise ValueError("unexpected value in result")
         
     def getMeanValue(self):
         if self.wins == 0 and self.draws == 0 and self.losses == 0:
             return 0
-        return (self.wins - self.losses) / (self.wins + self.draws + self.losses)
+        return (self.wins - self.losses) / (self.visits)
 
     def getUcb(self):
         if self.parent == None:
@@ -53,67 +43,73 @@ class Node:
     
 # Specific node for Connect4 (Inheritance)
 class ConnectFourNode(Node):
-    def __init__(self, parent: Self, boardState: Board, columnDroppedIn: int, activePlayer: str):
+    def __init__(self, parent: Self, boardState: Board, parentColumnDroppedIn: int, activePlayer: str):
         super().__init__(parent)
         self.boardState = boardState.copy() # we store a copy of the board to prevent side effects
-        self.columnDroppedIn = columnDroppedIn
+        self.parentColumnDroppedIn = parentColumnDroppedIn
         self.activePlayer = activePlayer
         self.isFullyExpanded = False
-
-    def createUnexploredChild(self):
-        # Find all the moves that haven't been made yet by the children, that don't result in a full column
-        unexploredColumns = list(range(game.NUM_COLUMNS))
-        for child in self.children:
-            if child.columnDroppedIn in unexploredColumns.copy():
-                unexploredColumns.remove(child.columnDroppedIn)
-        if len(unexploredColumns) == 0:
-            self.isFullyExpanded = True
-            raise IndexError("All moves from this state have been explored")
-        for column in unexploredColumns.copy(): # copy is needed for the iteration to work properly
-            if self.boardState[0][column] != '_':
-                unexploredColumns.remove(column)
-
-        # Choose a random column to drop the disc into
-        moveToMake = random.choice(unexploredColumns)
-
-        if self.activePlayer == 'X':
-            nextPlayer = 'O'
-        else:
-            nextPlayer = 'X'
-
-        newChild = ConnectFourNode(
-            self,
-            game.makeMove(nextPlayer, moveToMake, self.boardState),
-            moveToMake,
-            nextPlayer
-        )
-        self.children.append(newChild)
-        return newChild
+        self.untriedActions = getLegalColumns(boardState)
     
     def isTerminal(self):
-        if game.hasWon(self.activePlayer, self.boardState):
-            return True
-        if game.isADraw(self.boardState):
-            return True
-        return False
+        return isGameOver(self.boardState)
+    
+def getWinner(boardState: Board):
+    if game.hasWon(OPPOSING_PLAYER, boardState):
+        return OPPOSING_PLAYER
+    elif game.hasWon(COMPUTER_PLAYER, boardState):
+        return COMPUTER_PLAYER
+    elif game.isADraw(boardState):
+        return TIE_GAME
+    else:
+        return None
+    
+def isGameOver(boardState: Board):
+    return getWinner(boardState) != None
+    
+def getLegalColumns(board: Board):
+    legalColumns = list(range(game.NUM_COLUMNS))
+    for column in legalColumns.copy():
+        if board[0][column] != '_':
+            legalColumns.remove(column)
+    return legalColumns
+
+def expand(node: ConnectFourNode):
+    columnToDropIn = node.untriedActions.pop()
+    if len(node.untriedActions) == 0:
+        node.isFullyExpanded = True
+    nextPlayer = getNextPlayer(node.activePlayer)
+    nextBoard = game.makeMove(nextPlayer, columnToDropIn, node.boardState)
+    childNode = ConnectFourNode(node, nextBoard, columnToDropIn, nextPlayer)
+
+    node.children.append(childNode)
+    return childNode
+
+def getNextPlayer(player: str) -> str:
+    if player == COMPUTER_PLAYER:
+        return OPPOSING_PLAYER
+    else:
+        return COMPUTER_PLAYER
 
 # Returns +1 for a win for the computer and -1 for a loss for the computer.
-def getRolloutResult(node: ConnectFourNode) -> int:
-    # TODO: Implement draw
-    if node.isTerminal():
-        if node.activePlayer == COMPUTER_PLAYER:
-            return 1
-        elif node.activePlayer == OPPOSING_PLAYER:
-            return -1
+def getRolloutResult(finalBoard: Board) -> int:
+    winner = getWinner(finalBoard)
+    if winner == None:
+        raise ValueError("board is not in a game over state")
     else:
-        raise ValueError("node must be terminal")
+        if winner == TIE_GAME:
+            return 0
+        elif winner == COMPUTER_PLAYER:
+            return 1
+        elif winner == OPPOSING_PLAYER:
+            return -1
 
 # main function
 def monteCarloTreeSearch(root: ConnectFourNode):
 
     for iteration in range(MAX_SEARCH_TIME):
         leaf = traverse(root)
-        simulationResult = rollout(leaf)
+        simulationResult = rollout(leaf.boardState, root.activePlayer)
         backpropogate(leaf, simulationResult)
 
     return bestChild(root)
@@ -127,34 +123,36 @@ def bestUcb(children: list[ConnectFourNode]):
     children.sort(key=getUcb)
     return children[0]
 
-# node traversal function
 def traverse(node: ConnectFourNode):
-    while node.isFullyExpanded:
-        node = bestUcb(node.children)
-
-    # see if this is a leaf node
-    try:
-        return node.createUnexploredChild()
-    except IndexError:
-        return node
-
-# function for the result of the simulation
-def rollout(node):
     while not node.isTerminal():
-        node = rolloutPolicy(node)
-    return getRolloutResult(node)
+        if not node.isFullyExpanded:
+            return expand(node)
+        else:
+            node = bestChild(node)
+    return node
 
-# get a random child node
-def rolloutPolicy(node):
-    if len(node.children) < 1:
-        node.createUnexploredChild()
-    return random.choice(node.children)
+# rollout the game state from this state until there is an outcome.
+# importantly, this does not cause tree creation.
+# moves are selected randomly (light playout)
+def rollout(boardState: Board, player: str):
+    while not isGameOver(boardState):
+        nextPlayer = getNextPlayer(player)
+        possibleMoves = getLegalColumns(boardState)
+        columnToDropIn = random.choice(possibleMoves)
+        boardState = game.makeMove(nextPlayer, columnToDropIn, boardState)
+    return getRolloutResult(boardState)
 
 # backpropogation function
 def backpropogate(node: ConnectFourNode, result):
-    node.updateStats(result)
     node.visits += 1
-    if node.isRoot():
+    if result == 1:
+        node.wins += 1
+    elif result == -1:
+        node.losses += 1
+    elif result == 0:
+        node.draws += 1
+    
+    if not node.parent:
         return
     backpropogate(node.parent, result)
 

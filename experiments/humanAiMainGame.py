@@ -17,7 +17,7 @@ def getPlayerMove():
     return int(playerInput)
 
 def getComputerMove(rootState: mcst.ConnectFourNode):
-    return mcst.monteCarloTreeSearch(rootState).columnDroppedIn
+    return mcst.monteCarloTreeSearch(rootState).parentColumnDroppedIn
 
 def main():
     print("Welcome to Four in a Row! You will make the first move as '" + PLAYER_SYM + "'")
