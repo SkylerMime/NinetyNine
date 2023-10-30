@@ -135,8 +135,9 @@ def traverse(node: ConnectFourNode):
 # importantly, this does not cause tree creation.
 # moves are selected randomly (light playout)
 def rollout(boardState: Board, player: str):
+    nextPlayer = player
     while not isGameOver(boardState):
-        nextPlayer = getNextPlayer(player)
+        nextPlayer = getNextPlayer(nextPlayer)
         possibleMoves = getLegalColumns(boardState)
         columnToDropIn = random.choice(possibleMoves)
         boardState = game.makeMove(nextPlayer, columnToDropIn, boardState)
