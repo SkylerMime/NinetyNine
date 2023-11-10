@@ -6,11 +6,24 @@ For use of experimenting with Monte Carlo Search Trees
 # Constants
 NUM_COLUMNS = 7
 NUM_ROWS = 6
+PLAYERS = {"none": 0, "one": 1, "two": 2}
+OUTCOMES = {"none": 0, "one": 1, "two": 2, "draw": 3}
 type Board = list[list[str]]
 
 
+class ConnectFourState:
+    def __init__(self):
+        self.board = create_board()
+        self.to_play = PLAYERS["one"]
+
+
+def copy_state(state: ConnectFourState) -> ConnectFourState:
+    state.board = copy_board(state.board)
+    return state
+
+
 # Return a 6x7 board with X or O for the two players and _ representing no piece, [0][0] is the top-left coordinate
-def new_board() -> Board:
+def create_board() -> Board:
     board = []
     for row in range(NUM_ROWS):
         board.append([])
@@ -23,7 +36,12 @@ def new_board() -> Board:
 def print_board(board: Board):
     for row in range(NUM_ROWS):
         for col in range(NUM_COLUMNS):
-            print(board[row][col], end="")
+            if board[row][col] == PLAYERS["one"]:
+                print("X", end="")
+            elif board[row][col] == PLAYERS["two"]:
+                print("O", end="")
+            else:
+                print("_", end="")
         print()  # newline
     print("0123456")
 
@@ -34,7 +52,7 @@ def copy_board(board: Board):
 
 
 # Return a new board with the given move
-def make_move(player: str, column: int, board: Board):
+def make_move_to_board(player: int, column: int, board: Board):
     new_board = copy_board(board)
     if column >= NUM_COLUMNS:
         raise ValueError("column must be less than the number of columns")
@@ -54,8 +72,22 @@ def make_move(player: str, column: int, board: Board):
     return new_board
 
 
+def make_move(column: int, state: ConnectFourState):
+    new_state = ConnectFourState()
+    new_state.to_play = next_player(state.to_play)
+    new_state.board = make_move_to_board(state.to_play, column, state.board)
+    return new_state
+
+
+def next_player(current_player: int):
+    if current_player == PLAYERS["one"]:
+        return PLAYERS["two"]
+    else:
+        return PLAYERS["one"]
+
+
 # Return true if the given player has won
-def has_won(player: str, board: Board) -> bool:
+def has_won(player: int, board: Board) -> bool:
     # Check each horizontal for a four-in-a-row
     for row in board:
         for columnNum in range(NUM_COLUMNS - 3):
@@ -108,6 +140,32 @@ def is_a_draw(board: Board) -> bool:
     for columnNum in range(NUM_COLUMNS):
         if board[0][columnNum] == "_":
             return False
-    if has_won("X", board) or has_won("O", board):
+    if has_won(PLAYERS["one"], board) or has_won(PLAYERS["two"], board):
         return False
     return True
+
+
+def get_legal_moves(state: ConnectFourState):
+    return [col for col in range(NUM_COLUMNS) if state.board[0][col] == 0]
+
+
+def is_over(state: ConnectFourState) -> bool:
+    if (
+        has_won(PLAYERS["one"], state.board)
+        or has_won(PLAYERS["two"], state.board)
+        or is_a_draw(state.board)
+    ):
+        return True
+    return False
+
+
+def get_winner(state: ConnectFourState) -> int or None:
+    if is_a_draw(state.board):
+        return OUTCOMES["draw"]
+
+    if has_won(PLAYERS["one"], state.board):
+        return OUTCOMES["one"]
+    if has_won(PLAYERS["two"], state.board):
+        return OUTCOMES["two"]
+
+    return None
