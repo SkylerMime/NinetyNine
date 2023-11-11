@@ -1,9 +1,9 @@
 import pytest
 
 import numpy as np
-from experiments import mcts as mcst
-from experiments import ConnectState as game
-from experiments import meta
+from experiments import monte_carlo_tree_search as mcst
+from experiments import connect_four_state as game
+from experiments import constants
 
 
 @pytest.fixture
@@ -17,11 +17,18 @@ def three_connected_nodes():
 def test_backpropogate(three_connected_nodes):
     tree_search = mcst.MCTS()
 
-    tree_search.back_propagate(three_connected_nodes, meta.GameMeta.PLAYERS["one"], meta.GameMeta.OUTCOMES["one"])
+    tree_search.back_propagate(
+        three_connected_nodes,
+        constants.GameConstants.PLAYERS["one"],
+        constants.GameConstants.OUTCOMES["one"],
+    )
 
-    assert three_connected_nodes.N == 1 and three_connected_nodes.Q == 0
-    assert three_connected_nodes.parent.N == 1 and three_connected_nodes.parent.Q == 1
+    assert three_connected_nodes.visits == 1 and three_connected_nodes.wins == 0
     assert (
-        three_connected_nodes.parent.parent.N == 1
-        and three_connected_nodes.parent.parent.Q == 0
+        three_connected_nodes.parent.visits == 1
+        and three_connected_nodes.parent.wins == 1
+    )
+    assert (
+        three_connected_nodes.parent.parent.visits == 1
+        and three_connected_nodes.parent.parent.wins == 0
     )

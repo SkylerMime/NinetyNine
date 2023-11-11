@@ -1,13 +1,13 @@
 from copy import deepcopy
 import numpy as np
-from meta import GameMeta
+from constants import GameConstants
 
 
 class ConnectState:
     def __init__(self):
-        self.board = [[0] * GameMeta.COLS for _ in range(GameMeta.ROWS)]
-        self.to_play = GameMeta.PLAYERS['one']
-        self.height = [GameMeta.ROWS - 1] * GameMeta.COLS
+        self.board = [[0] * GameConstants.COLS for _ in range(GameConstants.ROWS)]
+        self.to_play = GameConstants.PLAYERS["one"]
+        self.height = [GameConstants.ROWS - 1] * GameConstants.COLS
         self.last_played = []
 
     def get_board(self):
@@ -17,13 +17,19 @@ class ConnectState:
         self.board[self.height[col]][col] = self.to_play
         self.last_played = [self.height[col], col]
         self.height[col] -= 1
-        self.to_play = GameMeta.PLAYERS['two'] if self.to_play == GameMeta.PLAYERS['one'] else GameMeta.PLAYERS['one']
+        self.to_play = (
+            GameConstants.PLAYERS["two"]
+            if self.to_play == GameConstants.PLAYERS["one"]
+            else GameConstants.PLAYERS["one"]
+        )
 
     def get_legal_moves(self):
-        return [col for col in range(GameMeta.COLS) if self.board[0][col] == 0]
+        return [col for col in range(GameConstants.COLS) if self.board[0][col] == 0]
 
     def check_win(self):
-        if len(self.last_played) > 0 and self.check_win_from(self.last_played[0], self.last_played[1]):
+        if len(self.last_played) > 0 and self.check_win_from(
+            self.last_played[0], self.last_played[1]
+        ):
             return self.board[self.last_played[0]][self.last_played[1]]
         return 0
 
@@ -37,7 +43,7 @@ class ConnectState:
         consecutive = 1
         # Check horizontal
         tmprow = row
-        while tmprow + 1 < GameMeta.ROWS and self.board[tmprow + 1][col] == player:
+        while tmprow + 1 < GameConstants.ROWS and self.board[tmprow + 1][col] == player:
             consecutive += 1
             tmprow += 1
         tmprow = row
@@ -51,7 +57,7 @@ class ConnectState:
         # Check vertical
         consecutive = 1
         tmpcol = col
-        while tmpcol + 1 < GameMeta.COLS and self.board[row][tmpcol + 1] == player:
+        while tmpcol + 1 < GameConstants.COLS and self.board[row][tmpcol + 1] == player:
             consecutive += 1
             tmpcol += 1
         tmpcol = col
@@ -66,13 +72,21 @@ class ConnectState:
         consecutive = 1
         tmprow = row
         tmpcol = col
-        while tmprow + 1 < GameMeta.ROWS and tmpcol + 1 < GameMeta.COLS and self.board[tmprow + 1][tmpcol + 1] == player:
+        while (
+            tmprow + 1 < GameConstants.ROWS
+            and tmpcol + 1 < GameConstants.COLS
+            and self.board[tmprow + 1][tmpcol + 1] == player
+        ):
             consecutive += 1
             tmprow += 1
             tmpcol += 1
         tmprow = row
         tmpcol = col
-        while tmprow - 1 >= 0 and tmpcol - 1 >= 0 and self.board[tmprow - 1][tmpcol - 1] == player:
+        while (
+            tmprow - 1 >= 0
+            and tmpcol - 1 >= 0
+            and self.board[tmprow - 1][tmpcol - 1] == player
+        ):
             consecutive += 1
             tmprow -= 1
             tmpcol -= 1
@@ -84,13 +98,21 @@ class ConnectState:
         consecutive = 1
         tmprow = row
         tmpcol = col
-        while tmprow + 1 < GameMeta.ROWS and tmpcol - 1 >= 0 and self.board[tmprow + 1][tmpcol - 1] == player:
+        while (
+            tmprow + 1 < GameConstants.ROWS
+            and tmpcol - 1 >= 0
+            and self.board[tmprow + 1][tmpcol - 1] == player
+        ):
             consecutive += 1
             tmprow += 1
             tmpcol -= 1
         tmprow = row
         tmpcol = col
-        while tmprow - 1 >= 0 and tmpcol + 1 < GameMeta.COLS and self.board[tmprow - 1][tmpcol + 1] == player:
+        while (
+            tmprow - 1 >= 0
+            and tmpcol + 1 < GameConstants.COLS
+            and self.board[tmprow - 1][tmpcol + 1] == player
+        ):
             consecutive += 1
             tmprow -= 1
             tmpcol += 1
@@ -105,16 +127,29 @@ class ConnectState:
 
     def get_outcome(self):
         if len(self.get_legal_moves()) == 0 and self.check_win() == 0:
-            return GameMeta.OUTCOMES['draw']
+            return GameConstants.OUTCOMES["draw"]
 
-        return GameMeta.OUTCOMES['one'] if self.check_win() == GameMeta.PLAYERS['one'] else GameMeta.OUTCOMES['two']
+        return (
+            GameConstants.OUTCOMES["one"]
+            if self.check_win() == GameConstants.PLAYERS["one"]
+            else GameConstants.OUTCOMES["two"]
+        )
 
     def print(self):
-        print('=============================')
+        print("=============================")
 
-        for row in range(GameMeta.ROWS):
-            for col in range(GameMeta.COLS):
-                print('| {} '.format('X' if self.board[row][col] == 1 else 'O' if self.board[row][col] == 2 else ' '), end='')
-            print('|')
+        for row in range(GameConstants.ROWS):
+            for col in range(GameConstants.COLS):
+                print(
+                    "| {} ".format(
+                        "X"
+                        if self.board[row][col] == 1
+                        else "O"
+                        if self.board[row][col] == 2
+                        else " "
+                    ),
+                    end="",
+                )
+            print("|")
 
-        print('=============================')
+        print("=============================")

@@ -1,5 +1,5 @@
-from ConnectState import ConnectState
-from mcts import MCTS
+from connect_four_state import ConnectState
+from monte_carlo_tree_search import MCTS
 
 
 def play():
@@ -26,7 +26,7 @@ def play():
 
         print("Thinking...")
 
-        mcts.search(8)
+        mcts.search(7)
         num_rollouts, run_time = mcts.statistics()
         print("Statistics: ", num_rollouts, "rollouts in", run_time, "seconds")
         move = mcts.best_move()

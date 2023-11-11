@@ -3,28 +3,30 @@ import time
 import math
 from copy import deepcopy
 
-from ConnectState import ConnectState
-from meta import GameMeta, MCTSMeta
+from connect_four_state import ConnectState
+from constants import GameConstants, MCTSConstants
 
 
 class Node:
     def __init__(self, move, parent):
         self.move = move
         self.parent = parent
-        self.N = 0
-        self.Q = 0
+        self.visits = 0
+        self.wins = 0
         self.children = {}
-        self.outcome = GameMeta.PLAYERS['none']
+        self.outcome = GameConstants.PLAYERS["none"]
 
     def add_children(self, children: dict) -> None:
         for child in children:
             self.children[child.move] = child
 
-    def value(self, explore: float = MCTSMeta.EXPLORATION):
-        if self.N == 0:
-            return 0 if explore == 0 else GameMeta.INF
+    def value(self, explore: float = MCTSConstants.EXPLORATION):
+        if self.visits == 0:
+            return 0 if explore == 0 else GameConstants.INF
         else:
-            return self.Q / self.N + explore * math.sqrt(math.log(self.parent.N) / self.N)
+            return self.wins / self.visits + explore * math.sqrt(
+                math.log(self.parent.visits) / self.visits
+            )
 
 
 class MCTS:
@@ -47,7 +49,7 @@ class MCTS:
             node = random.choice(max_nodes)
             state.move(node.move)
 
-            if node.N == 0:
+            if node.visits == 0:
                 return node, state
 
         if self.expand(node, state):
@@ -72,15 +74,14 @@ class MCTS:
         return state.get_outcome()
 
     def back_propagate(self, node: Node, turn: int, outcome: int) -> None:
-
         # For the current player, not the next player
         reward = 0 if outcome == turn else 1
 
         while node is not None:
-            node.N += 1
-            node.Q += reward
+            node.visits += 1
+            node.wins += reward
             node = node.parent
-            if outcome == GameMeta.OUTCOMES['draw']:
+            if outcome == GameConstants.OUTCOMES["draw"]:
                 reward = 0
             else:
                 reward = 1 - reward
@@ -103,8 +104,8 @@ class MCTS:
         if self.root_state.game_over():
             return -1
 
-        max_value = max(self.root.children.values(), key=lambda n: n.N).N
-        max_nodes = [n for n in self.root.children.values() if n.N == max_value]
+        max_value = max(self.root.children.values(), key=lambda n: n.visits).visits
+        max_nodes = [n for n in self.root.children.values() if n.visits == max_value]
         best_child = random.choice(max_nodes)
 
         return best_child.move
