@@ -1,4 +1,4 @@
-from experiments import connect_four as game
+from experiments import ConnectState as game
 
 
 class TestBoardSetup:

@@ -1,43 +1,45 @@
-import monte_carlo_search_tree as mcst
-import connect_four as game
+from ConnectState import ConnectState
+from mcts import MCTS
 
 
-def main():
-    state = game.ConnectFourState()
-    search_tree = mcst.MonteCarloSearchTree(state)
+def play():
+    state = ConnectState()
+    mcts = MCTS(state)
 
-    while not game.is_over(state):
-        print("Current board:")
-        game.print_board(state.board)
+    while not state.game_over():
+        print("Current state:")
+        state.print()
 
         user_move = int(input("Enter a move: "))
-        while user_move not in game.get_legal_moves(state):
+        while user_move not in state.get_legal_moves():
             print("Illegal move")
             user_move = int(input("Enter a move: "))
 
-        state = game.make_move(user_move, state)
-        search_tree.move(user_move)
+        state.move(user_move)
+        mcts.move(user_move)
 
-        game.print_board(state.board)
+        state.print()
 
-        if game.is_over(state):
+        if state.game_over():
             print("Player one won!")
             break
 
         print("Thinking...")
 
-        search_tree.search()
-        move = search_tree.best_move()
+        mcts.search(8)
+        num_rollouts, run_time = mcts.statistics()
+        print("Statistics: ", num_rollouts, "rollouts in", run_time, "seconds")
+        move = mcts.best_move()
 
-        print("Search tree chose move: ", move)
+        print("MCTS chose move: ", move)
 
-        state = game.make_move(move, state)
-        search_tree.move(move)
+        state.move(move)
+        mcts.move(move)
 
-        if game.is_over(state):
+        if state.game_over():
             print("Player two won!")
             break
 
 
 if __name__ == "__main__":
-    main()
+    play()
