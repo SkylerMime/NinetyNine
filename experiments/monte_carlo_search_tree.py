@@ -7,14 +7,14 @@ from connect_four import Board
 import connect_four as game
 import numpy as np
 
-MAX_SEARCH_TIME = 1000
+MAX_SEARCH_TIME = 10000
 UCB_CONSTANT = 1.41
 
 INF = float("inf")
 
 
 class Node:
-    def __init__(self, move, parent: Self | None):
+    def __init__(self, move: int | None, parent: Self | None):
         self.move = move
         self.parent = parent
         self.visits = 0
@@ -120,4 +120,4 @@ def backpropogate(node: Node, whose_turn: int, outcome: int) -> None:
         if outcome == whose_turn:
             node.wins += 1
         node = node.parent
-        whose_turn = 1 - whose_turn
+        whose_turn = game.next_player(whose_turn)

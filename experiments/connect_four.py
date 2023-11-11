@@ -28,7 +28,7 @@ def create_board() -> Board:
     for row in range(NUM_ROWS):
         board.append([])
         for col in range(NUM_COLUMNS):
-            board[row].append("_")
+            board[row].append(PLAYERS['none'])
     return board
 
 
@@ -56,16 +56,16 @@ def make_move_to_board(player: int, column: int, board: Board):
     new_board = copy_board(board)
     if column >= NUM_COLUMNS:
         raise ValueError("column must be less than the number of columns")
-    if new_board[0][column] != "_":
+    if new_board[0][column] != PLAYERS["none"]:
         raise ValueError("illegal move: column is full")
 
     # if this column is empty, add this piece to the bottom
-    if new_board[NUM_ROWS - 1][column] == "_":
+    if new_board[NUM_ROWS - 1][column] == PLAYERS["none"]:
         new_board[NUM_ROWS - 1][column] = player
     # otherwise, find where this piece should drop to
     else:
         for row in range(NUM_ROWS):
-            if new_board[row][column] != "_":
+            if new_board[row][column] != PLAYERS["none"]:
                 # we have found the first non-empty space
                 new_board[row - 1][column] = player
                 break
@@ -138,7 +138,7 @@ def has_won(player: int, board: Board) -> bool:
 
 def is_a_draw(board: Board) -> bool:
     for columnNum in range(NUM_COLUMNS):
-        if board[0][columnNum] == "_":
+        if board[0][columnNum] == PLAYERS["none"]:
             return False
     if has_won(PLAYERS["one"], board) or has_won(PLAYERS["two"], board):
         return False
@@ -146,7 +146,7 @@ def is_a_draw(board: Board) -> bool:
 
 
 def get_legal_moves(state: ConnectFourState):
-    return [col for col in range(NUM_COLUMNS) if state.board[0][col] == 0]
+    return [col for col in range(NUM_COLUMNS) if state.board[0][col] == PLAYERS["none"]]
 
 
 def is_over(state: ConnectFourState) -> bool:
