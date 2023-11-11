@@ -14,9 +14,12 @@ def three_connected_nodes():
     return node3
 
 
-def test_backpropogate(three_connected_nodes):
-    tree_search = mcst.MCTS()
+@pytest.fixture
+def tree_search():
+    return mcst.MCTS()
 
+
+def test_backpropogate(three_connected_nodes, tree_search):
     tree_search.back_propagate(
         three_connected_nodes,
         constants.GameConstants.PLAYERS["one"],

@@ -16,7 +16,7 @@ class Node:
         self.children = {}
         self.outcome = GameConstants.PLAYERS["none"]
 
-    def add_children(self, children: dict) -> None:
+    def add_children(self, children: dict | list) -> None:
         for child in children:
             self.children[child.move] = child
 
@@ -27,6 +27,37 @@ class Node:
             return self.wins / self.visits + explore * math.sqrt(
                 math.log(self.parent.visits) / self.visits
             )
+
+
+def roll_out(state: ConnectState) -> int:
+    while not state.game_over():
+        state.move(random.choice(state.get_legal_moves()))
+
+    return state.get_outcome()
+
+
+def back_propagate(node: Node, turn: int, outcome: int) -> None:
+    # For the current player, not the next player
+    reward = 0 if outcome == turn else 1
+
+    while node is not None:
+        node.visits += 1
+        node.wins += reward
+        node = node.parent
+        if outcome == GameConstants.OUTCOMES["draw"]:
+            reward = 0
+        else:
+            reward = 1 - reward
+
+
+def expand(parent: Node, state: ConnectState) -> bool:
+    if state.game_over():
+        return False
+
+    children = [Node(move, parent) for move in state.get_legal_moves()]
+    parent.add_children(children)
+
+    return True
 
 
 class MCTS:
@@ -52,39 +83,11 @@ class MCTS:
             if node.visits == 0:
                 return node, state
 
-        if self.expand(node, state):
+        if expand(node, state):
             node = random.choice(list(node.children.values()))
             state.move(node.move)
 
         return node, state
-
-    def expand(self, parent: Node, state: ConnectState) -> bool:
-        if state.game_over():
-            return False
-
-        children = [Node(move, parent) for move in state.get_legal_moves()]
-        parent.add_children(children)
-
-        return True
-
-    def roll_out(self, state: ConnectState) -> int:
-        while not state.game_over():
-            state.move(random.choice(state.get_legal_moves()))
-
-        return state.get_outcome()
-
-    def back_propagate(self, node: Node, turn: int, outcome: int) -> None:
-        # For the current player, not the next player
-        reward = 0 if outcome == turn else 1
-
-        while node is not None:
-            node.visits += 1
-            node.wins += reward
-            node = node.parent
-            if outcome == GameConstants.OUTCOMES["draw"]:
-                reward = 0
-            else:
-                reward = 1 - reward
 
     def search(self, time_limit: int):
         start_time = time.process_time()
@@ -92,8 +95,8 @@ class MCTS:
         num_rollouts = 0
         while time.process_time() - start_time < time_limit:
             node, state = self.select_node()
-            outcome = self.roll_out(state)
-            self.back_propagate(node, state.to_play, outcome)
+            outcome = roll_out(state)
+            back_propagate(node, state.to_play, outcome)
             num_rollouts += 1
 
         run_time = time.process_time() - start_time

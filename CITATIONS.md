@@ -9,3 +9,5 @@ I used this to compare a Python implementation of MCST: https://ai-boson.github.
 As well as this implementation made specifically for Connect 4: https://www.harrycodes.com/blog/monte-carlo-tree-search
 
 This last implementation was invaluable to me for testing and learning about the algorithm
+
+ChatGPT was a helpful tool for the development process
