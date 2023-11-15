@@ -1,5 +1,5 @@
 from connect_four_state import ConnectState
-from monte_carlo_tree_search import MCTS
+from abstract_classes.monte_carlo_tree_search import MCTS
 
 
 def play():

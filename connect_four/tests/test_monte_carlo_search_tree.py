@@ -1,9 +1,7 @@
 import pytest
 
-import numpy as np
-from experiments import monte_carlo_tree_search as mcst
-from experiments import connect_four_state as game
-from experiments import constants
+from abstract_classes import monte_carlo_tree_search as mcst
+from connect_four import constants
 
 
 @pytest.fixture
@@ -20,7 +18,7 @@ def tree_search():
 
 
 def test_backpropogate(three_connected_nodes, tree_search):
-    tree_search.back_propagate(
+    mcst.back_propagate(
         three_connected_nodes,
         constants.GameConstants.PLAYERS["one"],
         constants.GameConstants.OUTCOMES["one"],

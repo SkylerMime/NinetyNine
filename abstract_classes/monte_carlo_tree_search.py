@@ -3,8 +3,8 @@ import time
 import math
 from copy import deepcopy
 
-from connect_four_state import ConnectState
-from constants import GameConstants, MCTSConstants
+from connect_four.connect_four_state import ConnectState
+from connect_four.constants import GameConstants, MCTSConstants
 
 
 class Node:
