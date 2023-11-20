@@ -1,68 +1,6 @@
 import pytest
 from ninety_nine import ninety_nine_state as game
-from ninety_nine.constants import Rank, Suit, PlayerState
-
-ARBITRARY_SEED = 5
-
-
-@pytest.fixture
-def bid():
-    return {
-        game.Card(Rank.ACE, Suit.SPADES),
-        game.Card(Rank.KING, Suit.SPADES),
-        game.Card(Rank.QUEEN, Suit.SPADES),
-    }
-
-
-@pytest.fixture
-def seven_of_hearts():
-    return game.Card(Rank.SEVEN, Suit.HEARTS)
-
-
-@pytest.fixture
-def six_of_spades():
-    return game.Card(Rank.SIX, Suit.SPADES)
-
-
-@pytest.fixture
-def ace_of_spades():
-    return game.Card(Rank.ACE, Suit.SPADES)
-
-
-@pytest.fixture
-def hand_after_playing():
-    return {
-        game.Card(Rank.EIGHT, Suit.HEARTS),
-        game.Card(Rank.NINE, Suit.HEARTS),
-        game.Card(Rank.SEVEN, Suit.CLUBS),
-        game.Card(Rank.EIGHT, Suit.CLUBS),
-        game.Card(Rank.NINE, Suit.CLUBS),
-        game.Card(Rank.TEN, Suit.DIAMONDS),
-        game.Card(Rank.JACK, Suit.DIAMONDS),
-        game.Card(Rank.QUEEN, Suit.DIAMONDS),
-    }
-
-
-@pytest.fixture
-def hand_without_bid(hand_after_playing, seven_of_hearts):
-    return hand_after_playing | {seven_of_hearts}
-
-
-@pytest.fixture
-def initial_hand(bid, hand_without_bid):
-    return bid | hand_without_bid
-
-
-@pytest.fixture
-def player_after_bidding(initial_hand, bid):
-    player = game.Player(initial_hand)
-    player.make_bid(bid)
-    return player
-
-
-@pytest.fixture
-def player_with_one_card(seven_of_hearts):
-    return game.Player({seven_of_hearts})
+from ninety_nine.constants import Suit, PlayerState
 
 
 class TestPLayer:
@@ -92,110 +30,6 @@ class TestPLayer:
             player_after_bidding.play_card(six_of_spades)
 
 
-@pytest.fixture
-def game_state_after_dealing(three_hands_of_nine):
-    new_state = game.GameState()
-    new_state.start_new_game(ARBITRARY_SEED)
-    for i in range(len(new_state.PLAYERS)):
-        new_state.PLAYERS[i].hand = three_hands_of_nine[i]
-    new_state.TRUMP_SUIT = Suit.CLUBS
-
-    return new_state
-
-
-@pytest.fixture
-def six_of_hearts():
-    return game.Card(Rank.SIX, Suit.HEARTS)
-
-
-@pytest.fixture
-def trick_of_two_cards(seven_of_hearts, six_of_spades):
-    return {0: seven_of_hearts, 1: six_of_spades}
-
-
-@pytest.fixture
-def trick_of_three_cards(seven_of_hearts, six_of_spades, six_of_hearts):
-    return {0: seven_of_hearts, 1: six_of_spades, 2: six_of_hearts}
-
-
-@pytest.fixture
-def game_state_with_one_trick(game_state_after_dealing, trick_of_three_cards):
-    game_state_after_dealing.current_trick = trick_of_three_cards
-    return game_state_after_dealing
-
-
-@pytest.fixture
-def game_state_with_two_card_trick(game_state_after_dealing, trick_of_two_cards):
-    game_state_after_dealing.current_trick = trick_of_two_cards
-    return game_state_after_dealing
-
-
-@pytest.fixture
-def game_state_after_one_card(game_state_after_dealing, ace_of_spades):
-    state = game_state_after_dealing.copy_state()
-    state.current_trick[state.next_to_play] = ace_of_spades
-    state.PLAYERS[state.next_to_play].hand.remove(ace_of_spades)
-    return state
-
-
-@pytest.fixture
-def three_hands_of_nine(ace_of_spades):
-    hand1 = {
-        game.Card(Rank.JACK, Suit.SPADES),
-        ace_of_spades,
-        game.Card(Rank.QUEEN, Suit.SPADES),
-        game.Card(Rank.SIX, Suit.SPADES),
-        game.Card(Rank.ACE, Suit.DIAMONDS),
-        game.Card(Rank.EIGHT, Suit.DIAMONDS),
-        game.Card(Rank.QUEEN, Suit.HEARTS),
-        game.Card(Rank.ACE, Suit.CLUBS),
-        game.Card(Rank.SIX, Suit.CLUBS),
-    }
-    hand2 = {
-        game.Card(Rank.KING, Suit.DIAMONDS),
-        game.Card(Rank.KING, Suit.SPADES),
-        game.Card(Rank.KING, Suit.HEARTS),
-        game.Card(Rank.ACE, Suit.HEARTS),
-        game.Card(Rank.SEVEN, Suit.HEARTS),
-        game.Card(Rank.JACK, Suit.HEARTS),
-        game.Card(Rank.TEN, Suit.CLUBS),
-        game.Card(Rank.SEVEN, Suit.CLUBS),
-        game.Card(Rank.NINE, Suit.CLUBS),
-    }
-    hand3 = {
-        game.Card(Rank.JACK, Suit.DIAMONDS),
-        game.Card(Rank.SIX, Suit.DIAMONDS),
-        game.Card(Rank.SEVEN, Suit.SPADES),
-        game.Card(Rank.SIX, Suit.HEARTS),
-        game.Card(Rank.TEN, Suit.HEARTS),
-        game.Card(Rank.EIGHT, Suit.CLUBS),
-        game.Card(Rank.ACE, Suit.CLUBS),
-        game.Card(Rank.KING, Suit.CLUBS),
-        game.Card(Rank.JACK, Suit.CLUBS),
-    }
-    return hand1, hand2, hand3
-
-
-@pytest.fixture
-def three_bids_of_three():
-    bid1 = {
-        game.Card(Rank.TEN, Suit.SPADES),
-        game.Card(Rank.NINE, Suit.SPADES),
-        game.Card(Rank.EIGHT, Suit.SPADES),
-    }
-    bid2 = {
-        game.Card(Rank.NINE, Suit.DIAMONDS),
-        game.Card(Rank.QUEEN, Suit.DIAMONDS),
-        game.Card(Rank.NINE, Suit.HEARTS),
-    }
-    bid3 = {
-        game.Card(Rank.SEVEN, Suit.DIAMONDS),
-        game.Card(Rank.TEN, Suit.DIAMONDS),
-        game.Card(Rank.EIGHT, Suit.HEARTS),
-    }
-    return bid1, bid2, bid3
-
-
 class TestGameState:
     def test_highest_heart_wins_heart_trick(self, game_state_with_one_trick):
         game_state_with_one_trick.TRUMP_SUIT = Suit.CLUBS
@@ -207,7 +41,9 @@ class TestGameState:
         game_state_with_one_trick.current_lead = 2
         assert game_state_with_one_trick.get_current_trick_winner() == 1
 
-    def test_copy_state_leaves_original_trick_unchanged(self, game_state_after_dealing, ace_of_spades):
+    def test_copy_state_leaves_original_trick_unchanged(
+        self, game_state_after_dealing, ace_of_spades
+    ):
         original_state = game_state_after_dealing
         new_state = game_state_after_dealing.copy_state()
         new_state.current_trick[0] = ace_of_spades
@@ -246,21 +82,71 @@ class TestFunctions:
         )
         assert new_state == game_state_after_one_card
 
-    def test_play_card_to_finish_trick_sets_new_lead(self, game_state_with_two_card_trick, six_of_hearts):
+    def test_play_card_to_finish_trick_sets_new_lead(
+        self, game_state_with_two_card_trick, six_of_hearts
+    ):
         player_to_move = 2
         game_state_with_two_card_trick.current_lead = 2
         game_state_with_two_card_trick.PLAYERS[player_to_move].hand.add(six_of_hearts)
         game_state_with_two_card_trick.next_to_play = player_to_move
-        finish_trick_state = game.make_card_play(game_state_with_two_card_trick, player_to_move, six_of_hearts)
+        finish_trick_state = game.make_card_play(
+            game_state_with_two_card_trick, player_to_move, six_of_hearts
+        )
         assert finish_trick_state.current_lead == 0
 
-    def test_play_card_to_finish_trick_increments_wins(self, game_state_with_two_card_trick, six_of_hearts):
+    def test_play_card_to_finish_trick_increments_wins(
+        self, game_state_with_two_card_trick, six_of_hearts
+    ):
         player_to_move = 2
         player_to_win = 0
         game_state_with_two_card_trick.current_lead = 2
         game_state_with_two_card_trick.PLAYERS[player_to_move].hand.add(six_of_hearts)
         game_state_with_two_card_trick.PLAYERS[player_to_win].tricks_won = 4
         game_state_with_two_card_trick.next_to_play = player_to_move
-        finish_trick_state = game.make_card_play(game_state_with_two_card_trick, player_to_move, six_of_hearts)
+        finish_trick_state = game.make_card_play(
+            game_state_with_two_card_trick, player_to_move, six_of_hearts
+        )
         assert finish_trick_state.PLAYERS[player_to_win].tricks_won == 5
         assert game_state_with_two_card_trick.PLAYERS[player_to_win].tricks_won == 4
+
+    def test_get_legal_moves_for_heart_trick(
+        self, game_state_with_two_card_trick, six_of_hearts, ten_of_hearts
+    ):
+        player_to_move = 2
+        game_state_with_two_card_trick.current_lead = 0
+        game_state_with_two_card_trick.next_to_play = 2
+        legal_cards_to_play = {six_of_hearts, ten_of_hearts}
+        assert (
+            game.get_legal_card_plays(game_state_with_two_card_trick, player_to_move)
+            == legal_cards_to_play
+        )
+
+    def test_get_legal_moves_for_void_suit(
+        self, game_state_with_two_card_trick, six_of_hearts, ten_of_hearts
+    ):
+        player_to_move_num = 2
+        game_state_with_two_card_trick.current_lead = 0
+        game_state_with_two_card_trick.next_to_play = 2
+        player_to_move = game_state_with_two_card_trick.PLAYERS[player_to_move_num]
+        player_to_move.hand.remove(six_of_hearts)
+        player_to_move.hand.remove(ten_of_hearts)
+        legal_cards_to_play = player_to_move.hand.copy()
+        assert (
+            game.get_legal_card_plays(
+                game_state_with_two_card_trick, player_to_move_num
+            )
+            == legal_cards_to_play
+        )
+
+    def test_bid_value_of_three(self, bid):
+        assert game.bid_value(bid) == 3
+
+    def test_outcome_incomplete_game(self, game_state_with_two_card_trick):
+        with pytest.raises(KeyError):
+            game.get_scores(game_state_with_two_card_trick)
+
+    def test_outcome_one_winner(self, game_state_first_player_made_bid):
+        assert game.get_scores(game_state_first_player_made_bid) == {0: 33, 1: 1, 2: 5}
+
+    def test_outcome_two_winners(self, game_state_two_players_made_bid):
+        assert game.get_scores(game_state_two_players_made_bid) == {0: 4, 1: 24, 2: 21}

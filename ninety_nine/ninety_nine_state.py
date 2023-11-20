@@ -151,6 +151,31 @@ def is_full(trick: dict):
         return True
 
 
+def get_legal_card_plays(game_state: GameState, player: int):
+    if player not in game_state.PLAYERS.keys():
+        raise KeyError("player must be 0, 1, or 2")
+    if game_state.next_to_play != player:
+        raise KeyError("it is not this player's turn")
+
+    current_player: Player = game_state.PLAYERS[player]
+
+    led_card: Card = game_state.current_trick[game_state.current_lead]
+    led_suit = led_card.suit
+
+    cards_in_led_suit = set()
+
+    # we must follow suit if possible
+    for card in current_player.hand:
+        if card.suit == led_suit:
+            cards_in_led_suit.add(card)
+
+    if len(cards_in_led_suit) > 0:
+        return cards_in_led_suit
+
+    else:
+        return current_player.hand
+
+
 def make_card_play(game_state: GameState, player: int, card: Card):
     if player not in game_state.PLAYERS.keys():
         raise KeyError("player must be 0, 1, or 2")
@@ -159,9 +184,8 @@ def make_card_play(game_state: GameState, player: int, card: Card):
 
     next_state = game_state.copy_state()
 
-    current_player: Player = game_state.PLAYERS[player]
+    current_player: Player = next_state.PLAYERS[player]
     current_player.play_card(card)
-    current_trick = game_state.current_trick
     next_state.current_trick[player] = card
 
     if is_full(next_state.current_trick):
@@ -173,3 +197,40 @@ def make_card_play(game_state: GameState, player: int, card: Card):
         next_state.current_trick = {}
 
     return next_state
+
+
+def bid_value(bid: set):
+    contracted_tricks = 0
+    for card in bid:
+        contracted_tricks += card.suit.value
+    return contracted_tricks
+
+
+def get_scores(final_state: GameState):
+    for player in final_state.PLAYERS.values():
+        if len(player.hand) > 0:
+            raise KeyError("all cards should be played")
+
+    player_num_range = range(len(final_state.PLAYERS))
+
+    scores = {}
+    for player_num in player_num_range:
+        scores[player_num] = final_state.PLAYERS[player_num].tricks_won
+
+    players_making_bid = []
+    for player in final_state.PLAYERS.values():
+        if player.tricks_won == bid_value(player.bid):
+            players_making_bid.append(player)
+
+    bid_bonus = 0
+    if len(players_making_bid) == 1:
+        bid_bonus = 30
+    elif len(players_making_bid) == 2:
+        bid_bonus = 20
+    elif len(players_making_bid) == 3:
+        bid_bonus = 10
+    for player_num in player_num_range:
+        if final_state.PLAYERS[player_num] in players_making_bid:
+            scores[player_num] += bid_bonus
+
+    return scores
