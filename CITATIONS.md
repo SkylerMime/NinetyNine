@@ -1,3 +1,7 @@
+Playing Card assets from https://mreliptik.itch.io/
+
+---
+
 I used these websites to learn about the Monte Carlo Search Tree algorithm, get inspiration, and check my work:
 
 Implementation based on GeeksForGeeks: https://www.geeksforgeeks.org/ml-monte-carlo-tree-search-mcts/
