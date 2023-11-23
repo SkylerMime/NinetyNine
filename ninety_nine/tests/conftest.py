@@ -17,9 +17,16 @@ def bid():
 
 
 @pytest.fixture
-def bid_input_mock():
+def human_bid_mock():
     mock = Mock()
     mock.side_effect = ["AS", "KS", "QS"]
+    return mock
+
+
+@pytest.fixture
+def random_bid_mock():
+    mock = Mock()
+    mock.side_effect = [Card(Rank.ACE, Suit.SPADES), Card(Rank.KING, Suit.SPADES), Card(Rank.QUEEN, Suit.SPADES)]
     return mock
 
 
@@ -115,6 +122,20 @@ def hand_after_playing():
         game.Card(Rank.JACK, Suit.DIAMONDS),
         game.Card(Rank.QUEEN, Suit.DIAMONDS),
     }
+
+
+@pytest.fixture
+def sorted_cards():
+    return [
+        game.Card(Rank.NINE, Suit.CLUBS),
+        game.Card(Rank.EIGHT, Suit.CLUBS),
+        game.Card(Rank.SEVEN, Suit.CLUBS),
+        game.Card(Rank.NINE, Suit.HEARTS),
+        game.Card(Rank.EIGHT, Suit.HEARTS),
+        game.Card(Rank.QUEEN, Suit.DIAMONDS),
+        game.Card(Rank.JACK, Suit.DIAMONDS),
+        game.Card(Rank.TEN, Suit.DIAMONDS),
+    ]
 
 
 @pytest.fixture
@@ -216,7 +237,9 @@ def trick_of_six_club_and_nine_club(six_of_clubs, nine_of_clubs) -> game.Trick:
 
 
 @pytest.fixture
-def trick_of_six_nine_and_king_of_clubs(six_of_clubs, nine_of_clubs, king_of_clubs) -> game.Trick:
+def trick_of_six_nine_and_king_of_clubs(
+    six_of_clubs, nine_of_clubs, king_of_clubs
+) -> game.Trick:
     return {
         "cards": {0: six_of_clubs, 1: nine_of_clubs, 2: king_of_clubs},
         "lead_player": 0,
@@ -246,13 +269,17 @@ def game_state_with_two_card_trick(game_state_after_dealing, trick_of_two_cards)
 
 
 @pytest.fixture
-def game_state_with_six_club_and_nine_club(game_state_after_dealing, trick_of_six_club_and_nine_club):
+def game_state_with_six_club_and_nine_club(
+    game_state_after_dealing, trick_of_six_club_and_nine_club
+):
     game_state_after_dealing.current_trick = trick_of_six_club_and_nine_club
     return game_state_after_dealing
 
 
 @pytest.fixture
-def game_state_with_six_nine_and_king_of_clubs(game_state_after_dealing, trick_of_six_nine_and_king_of_clubs):
+def game_state_with_six_nine_and_king_of_clubs(
+    game_state_after_dealing, trick_of_six_nine_and_king_of_clubs
+):
     game_state_after_dealing.current_trick = trick_of_six_nine_and_king_of_clubs
     return game_state_after_dealing
 

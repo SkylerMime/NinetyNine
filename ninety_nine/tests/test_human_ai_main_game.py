@@ -8,11 +8,17 @@ def test_card_to_string(ten_of_hearts_string, ten_of_hearts):
     assert main.get_valid_card(ten_of_hearts_string) == ten_of_hearts
 
 
-def test_get_human_bid(monkeypatch, player_before_bidding, bid, bid_input_mock):
+def test_get_human_bid(monkeypatch, player_before_bidding, bid, human_bid_mock):
     with monkeypatch.context() as m:
-        m.setattr(builtins, "input", bid_input_mock)
+        m.setattr(builtins, "input", human_bid_mock)
         main.get_human_bid(player_before_bidding)
         assert player_before_bidding.bid == bid
+
+
+def test_get_random_bid(monkeypatch, player_before_bidding, bid, random_bid_mock):
+    monkeypatch.setattr(random, "choice", random_bid_mock)
+    main.get_random_bid(player_before_bidding)
+    assert player_before_bidding.bid == bid
 
 
 def test_all_cards_played(game_state_after_dealing):
@@ -44,7 +50,11 @@ def test_game_loop_all_cards_get_played(
     monkeypatch.setattr(random, "choice", both_random_plays_mock)
     with monkeypatch.context() as m:
         m.setattr(builtins, "input", human_plays_mock)
-        final_state = main.primary_game_loop(game_state_after_dealing_spades_trump)
+        final_state = main.play_one_hand_of_ninety_nine(game_state_after_dealing_spades_trump)
         assert len(final_state.PLAYERS[0].hand) == 0
         assert len(final_state.PLAYERS[1].hand) == 0
         assert len(final_state.PLAYERS[2].hand) == 0
+
+
+def test_order_cards_by_suit_and_rank(hand_after_playing, sorted_cards):
+    assert main.get_sorted_cards(hand_after_playing) == sorted_cards

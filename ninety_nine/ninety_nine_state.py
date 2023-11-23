@@ -8,6 +8,16 @@ class Card:
         self.rank = rank
         self.suit = suit
 
+    def __repr__(self):
+        class_name = type(self).__name__
+        return f"{class_name}({self.rank!r}, {self.suit!r}"
+
+    def __lt__(self, other):
+        if self.suit == other.suit:
+            return self.rank < other.rank
+        else:
+            return self.suit < other.suit
+
     def __eq__(self, other):
         if isinstance(other, Card):
             return self.rank == other.rank and self.suit == other.suit

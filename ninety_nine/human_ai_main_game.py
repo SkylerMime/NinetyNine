@@ -19,16 +19,27 @@ def main(random_seed=None):
     game_state = game.GameState(random_seed)
     num_players = len(game_state.PLAYERS)
 
+    print(f"The trump suit is: {game_state.TRUMP_SUIT}")
+
     for player_num in range(num_players):
         if player_types[player_num] == PlayerTypes.HUMAN:
             get_human_bid(game_state.PLAYERS[player_num])
         elif player_types[player_num] == PlayerTypes.RANDOM:
             get_random_bid(game_state.PLAYERS[player_num])
 
-    primary_game_loop(game_state, player_types)
+    final_state = play_one_hand_of_ninety_nine(game_state, player_types=player_types)
+
+    print_line()
+    print("The hand has ended")
+    print("Scores:")
+    scores = game.get_scores(final_state)
+    print(f"Your Score: {scores[0]}")
+    print(f"Player 1 Score: {scores[1]}")
+    print(f"Player 2 Score: {scores[2]}")
+    print_line()
 
 
-def primary_game_loop(game_state, num_tricks=NUM_TRICKS, player_types=PLAYER_TYPES):
+def play_one_hand_of_ninety_nine(game_state, num_tricks=NUM_TRICKS, player_types=PLAYER_TYPES):
     next_to_play = 0
 
     for trick in range(num_tricks * NUM_PLAYERS):
@@ -116,7 +127,7 @@ def get_random_bid(random_player: game.Player):
     for i in range(NUM_CARDS_IN_BID):
         next_bid_card = random.choice(list(random_player.hand))
         random_player.hand.remove(next_bid_card)
-        random_player.hand.add(next_bid_card)
+        random_player.bid.add(next_bid_card)
 
 
 def get_valid_card(card_string: str) -> game.Card:
@@ -202,10 +213,16 @@ def print_suit(suit: Suit):
             raise ValueError("Unknown suit")
 
 
-def print_cards(hand: set):
-    for card in hand:
+def print_cards(cards: set):
+    for card in get_sorted_cards(cards):
         print_card(card)
         print(" ", end="")
+
+
+def get_sorted_cards(cards: set):
+    cards = list(cards)
+    cards.sort(reverse=True)
+    return cards
 
 
 def print_trick_winner(winner: int):
