@@ -1,6 +1,8 @@
 import pytest
 from ninety_nine import ninety_nine_state as game
+from ninety_nine.ninety_nine_state import Card
 from ninety_nine.constants import Rank, Suit
+from unittest.mock import Mock
 
 ARBITRARY_SEED = 5
 
@@ -12,6 +14,63 @@ def bid():
         game.Card(Rank.KING, Suit.SPADES),
         game.Card(Rank.QUEEN, Suit.SPADES),
     }
+
+
+@pytest.fixture
+def bid_input_mock():
+    mock = Mock()
+    mock.side_effect = ["AS", "KS", "QS"]
+    return mock
+
+
+@pytest.fixture
+def human_plays_mock():
+    mock = Mock()
+    mock.side_effect = [
+        "AS",
+        "6C",
+        "8D",
+        "AC",
+        "AD",
+        "QH",
+        "6S",  # ASSUMPTION: Spades is trump suit
+        "QS",
+        "JS",
+    ]
+    return mock
+
+
+@pytest.fixture
+def two_human_plays_mock():
+    mock = Mock()
+    mock.side_effect = ["KH", "AS"]
+    return mock
+
+
+@pytest.fixture
+def both_random_plays_mock():
+    mock = Mock()
+    mock.side_effect = [
+        Card(Rank.KING, Suit.SPADES),
+        Card(Rank.SEVEN, Suit.SPADES),
+        Card(Rank.NINE, Suit.CLUBS),
+        Card(Rank.KING, Suit.CLUBS),
+        Card(Rank.JACK, Suit.DIAMONDS),
+        Card(Rank.KING, Suit.DIAMONDS),
+        Card(Rank.SEVEN, Suit.CLUBS),
+        Card(Rank.QUEEN, Suit.CLUBS),
+        Card(Rank.ACE, Suit.HEARTS),
+        Card(Rank.SIX, Suit.DIAMONDS),
+        Card(Rank.KING, Suit.HEARTS),
+        Card(Rank.SIX, Suit.HEARTS),
+        Card(Rank.TEN, Suit.CLUBS),
+        Card(Rank.JACK, Suit.CLUBS),
+        Card(Rank.JACK, Suit.HEARTS),
+        Card(Rank.EIGHT, Suit.CLUBS),
+        Card(Rank.SEVEN, Suit.HEARTS),
+        Card(Rank.TEN, Suit.HEARTS),
+    ]
+    return mock
 
 
 @pytest.fixture
@@ -27,6 +86,21 @@ def six_of_spades():
 @pytest.fixture
 def ace_of_spades():
     return game.Card(Rank.ACE, Suit.SPADES)
+
+
+@pytest.fixture
+def six_of_clubs():
+    return game.Card(Rank.SIX, Suit.CLUBS)
+
+
+@pytest.fixture
+def nine_of_clubs():
+    return game.Card(Rank.NINE, Suit.CLUBS)
+
+
+@pytest.fixture
+def king_of_clubs():
+    return game.Card(Rank.KING, Suit.CLUBS)
 
 
 @pytest.fixture
@@ -54,10 +128,14 @@ def initial_hand(bid, hand_without_bid):
 
 
 @pytest.fixture
-def player_after_bidding(initial_hand, bid):
-    player = game.Player(initial_hand)
-    player.make_bid(bid)
-    return player
+def player_before_bidding(initial_hand):
+    return game.Player(initial_hand)
+
+
+@pytest.fixture
+def player_after_bidding(player_before_bidding, bid):
+    player_before_bidding.make_bid(bid)
+    return player_before_bidding
 
 
 @pytest.fixture
@@ -88,13 +166,18 @@ def game_state_two_players_made_bid(game_state_after_bidding, different_three_bi
 
 @pytest.fixture
 def game_state_after_dealing(three_hands_of_nine):
-    new_state = game.GameState()
-    new_state.start_new_game(ARBITRARY_SEED)
+    new_state = game.GameState(random_seed=ARBITRARY_SEED)
     for i in range(len(new_state.PLAYERS)):
         new_state.PLAYERS[i].hand = three_hands_of_nine[i]
     new_state.TRUMP_SUIT = Suit.CLUBS
 
     return new_state
+
+
+@pytest.fixture
+def game_state_after_dealing_spades_trump(game_state_after_dealing):
+    game_state_after_dealing.TRUMP_SUIT = Suit.SPADES
+    return game_state_after_dealing
 
 
 @pytest.fixture
@@ -115,13 +198,39 @@ def ten_of_hearts():
 
 
 @pytest.fixture
-def trick_of_two_cards(seven_of_hearts, six_of_spades):
-    return {0: seven_of_hearts, 1: six_of_spades}
+def trick_of_two_cards(seven_of_hearts, six_of_spades) -> game.Trick:
+    return {
+        "cards": {0: seven_of_hearts, 1: six_of_spades},
+        "lead_player": 0,
+        "winner": None,
+    }
 
 
 @pytest.fixture
-def trick_of_three_cards(seven_of_hearts, six_of_spades, six_of_hearts):
-    return {0: seven_of_hearts, 1: six_of_spades, 2: six_of_hearts}
+def trick_of_six_club_and_nine_club(six_of_clubs, nine_of_clubs) -> game.Trick:
+    return {
+        "cards": {0: six_of_clubs, 1: nine_of_clubs},
+        "lead_player": 0,
+        "winner": None,
+    }
+
+
+@pytest.fixture
+def trick_of_six_nine_and_king_of_clubs(six_of_clubs, nine_of_clubs, king_of_clubs) -> game.Trick:
+    return {
+        "cards": {0: six_of_clubs, 1: nine_of_clubs, 2: king_of_clubs},
+        "lead_player": 0,
+        "winner": None,
+    }
+
+
+@pytest.fixture
+def trick_of_three_cards(seven_of_hearts, six_of_spades, six_of_hearts) -> game.Trick:
+    return {
+        "cards": {0: seven_of_hearts, 1: six_of_spades, 2: six_of_hearts},
+        "lead_player": 0,
+        "winner": None,
+    }
 
 
 @pytest.fixture
@@ -137,10 +246,23 @@ def game_state_with_two_card_trick(game_state_after_dealing, trick_of_two_cards)
 
 
 @pytest.fixture
+def game_state_with_six_club_and_nine_club(game_state_after_dealing, trick_of_six_club_and_nine_club):
+    game_state_after_dealing.current_trick = trick_of_six_club_and_nine_club
+    return game_state_after_dealing
+
+
+@pytest.fixture
+def game_state_with_six_nine_and_king_of_clubs(game_state_after_dealing, trick_of_six_nine_and_king_of_clubs):
+    game_state_after_dealing.current_trick = trick_of_six_nine_and_king_of_clubs
+    return game_state_after_dealing
+
+
+@pytest.fixture
 def game_state_after_one_card(game_state_after_dealing, ace_of_spades):
     state = game_state_after_dealing.copy_state()
-    state.current_trick[state.next_to_play] = ace_of_spades
+    state.current_trick["cards"][state.next_to_play] = ace_of_spades
     state.PLAYERS[state.next_to_play].hand.remove(ace_of_spades)
+    state.next_to_play = 1
     return state
 
 
@@ -175,7 +297,7 @@ def three_hands_of_nine(ace_of_spades, six_of_hearts, ten_of_hearts):
         six_of_hearts,
         ten_of_hearts,
         game.Card(Rank.EIGHT, Suit.CLUBS),
-        game.Card(Rank.ACE, Suit.CLUBS),
+        game.Card(Rank.QUEEN, Suit.CLUBS),
         game.Card(Rank.KING, Suit.CLUBS),
         game.Card(Rank.JACK, Suit.CLUBS),
     }
@@ -220,3 +342,8 @@ def different_three_bids():
         game.Card(Rank.SIX, Suit.DIAMONDS),
     }
     return bid1, bid2, bid3
+
+
+@pytest.fixture
+def ten_of_hearts_string():
+    return "TH"

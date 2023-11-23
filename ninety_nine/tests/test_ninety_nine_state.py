@@ -41,13 +41,17 @@ class TestGameState:
         game_state_with_one_trick.current_lead = 2
         assert game_state_with_one_trick.get_current_trick_winner() == 1
 
+    def test_king_beats_six_and_nine(self, game_state_with_six_nine_and_king_of_clubs):
+        game_state_with_six_nine_and_king_of_clubs.current_lead = 0
+        assert game_state_with_six_nine_and_king_of_clubs.get_current_trick_winner() == 2
+
     def test_copy_state_leaves_original_trick_unchanged(
         self, game_state_after_dealing, ace_of_spades
     ):
         original_state = game_state_after_dealing
         new_state = game_state_after_dealing.copy_state()
-        new_state.current_trick[0] = ace_of_spades
-        assert len(original_state.current_trick) == 0
+        new_state.current_trick["cards"][0] = ace_of_spades
+        assert len(original_state.current_trick["cards"]) == 0
 
     def test_copy_state_leaves_original_lead_unchanged(self, game_state_after_dealing):
         original_state = game_state_after_dealing
@@ -86,20 +90,34 @@ class TestFunctions:
         self, game_state_with_two_card_trick, six_of_hearts
     ):
         player_to_move = 2
-        game_state_with_two_card_trick.current_lead = 2
+        game_state_with_two_card_trick.current_lead = 0
         game_state_with_two_card_trick.PLAYERS[player_to_move].hand.add(six_of_hearts)
         game_state_with_two_card_trick.next_to_play = player_to_move
         finish_trick_state = game.make_card_play(
             game_state_with_two_card_trick, player_to_move, six_of_hearts
         )
         assert finish_trick_state.current_lead == 0
+        assert finish_trick_state.next_to_play == 0
+
+    def test_play_card_player_two_wins_sets_two_as_lead(
+        self, game_state_with_six_club_and_nine_club, king_of_clubs
+    ):
+        player_to_move = 2
+        game_state_with_six_club_and_nine_club.current_lead = 0
+        game_state_with_six_club_and_nine_club.PLAYERS[player_to_move].hand.add(king_of_clubs)
+        game_state_with_six_club_and_nine_club.next_to_play = player_to_move
+        finish_trick_state = game.make_card_play(
+            game_state_with_six_club_and_nine_club, player_to_move, king_of_clubs
+        )
+        assert finish_trick_state.current_lead == 2
+        assert finish_trick_state.next_to_play == 2
 
     def test_play_card_to_finish_trick_increments_wins(
         self, game_state_with_two_card_trick, six_of_hearts
     ):
         player_to_move = 2
         player_to_win = 0
-        game_state_with_two_card_trick.current_lead = 2
+        game_state_with_two_card_trick.current_lead = 0
         game_state_with_two_card_trick.PLAYERS[player_to_move].hand.add(six_of_hearts)
         game_state_with_two_card_trick.PLAYERS[player_to_win].tricks_won = 4
         game_state_with_two_card_trick.next_to_play = player_to_move
@@ -138,6 +156,19 @@ class TestFunctions:
             == legal_cards_to_play
         )
 
+    def test_get_legal_moves_for_empty_trick(self, game_state_after_bidding):
+        player_to_move_num = 0
+        game_state_after_bidding.current_lead = 0
+        game_state_after_bidding.next_to_play = 0
+        player_to_move: game.Player = game_state_after_bidding.PLAYERS[
+            player_to_move_num
+        ]
+        legal_cards_to_play = player_to_move.hand.copy()
+        assert (
+            game.get_legal_card_plays(game_state_after_bidding, player_to_move_num)
+            == legal_cards_to_play
+        )
+
     def test_bid_value_of_three(self, bid):
         assert game.bid_value(bid) == 3
 
@@ -150,3 +181,16 @@ class TestFunctions:
 
     def test_outcome_two_winners(self, game_state_two_players_made_bid):
         assert game.get_scores(game_state_two_players_made_bid) == {0: 4, 1: 24, 2: 21}
+
+    def test_get_trick_winner_needs_only_the_trick(
+        self, ace_of_spades, ten_of_hearts, seven_of_hearts
+    ):
+        trick = {
+            "cards": {
+                0: ace_of_spades,
+                1: ten_of_hearts,
+                2: seven_of_hearts,
+            },
+            "lead_player": 0,
+        }
+        assert game.get_trick_winner(trick, Suit.CLUBS) == 0
