@@ -12,6 +12,8 @@ from ninety_nine.constants import (
     NUM_PLAYERS,
 )
 
+NUM_CARDS = NUM_CARDS_IN_BID + NUM_TRICKS
+
 HUMAN_PLAYER_NUM = 0
 
 WINDOW_WIDTH = 1280
@@ -21,8 +23,11 @@ CARD_WIDTH = 655 / 5
 CARD_HEIGHT = 930 / 5
 CARD_INNER_BORDER = 5
 
-CARD_Y_POSITION = WINDOW_HEIGHT * 3 // 5
+CARD_Y_POSITION = WINDOW_HEIGHT - CARD_HEIGHT - 25
 SPACE_BETWEEN_CARDS = WINDOW_WIDTH // 15
+WIDTH_OF_FULL_HAND = (NUM_CARDS - 1) * SPACE_BETWEEN_CARDS + CARD_WIDTH
+CARD_OUTSIDE_HORIZONTAL_MARGIN = WINDOW_WIDTH - WIDTH_OF_FULL_HAND
+CARD_X_POSITION = CARD_OUTSIDE_HORIZONTAL_MARGIN // 2
 
 GREEN = (0, 53, 24)
 BACKGROUND_COLOR = GREEN
@@ -57,7 +62,7 @@ def main():
         screen.fill(BACKGROUND_COLOR)
         sorted_hand = game_display.get_sorted_cards(human_player.hand)
         hand_images = get_images_from_cards(sorted_hand)
-        draw_hand(screen, hand_images, 50)
+        draw_hand(screen, hand_images)
         # display_trump_suit_in_top_right_corner()
 
         # render graphics here
@@ -69,7 +74,7 @@ def main():
 def draw_hand(
     screen: pygame.Surface,
     hand_images: list,
-    first_card_x: int,
+    first_card_x: int = CARD_X_POSITION,
     first_card_y: int = CARD_Y_POSITION,
     x_margin: int = SPACE_BETWEEN_CARDS,
 ):
@@ -112,7 +117,7 @@ def get_image_filename_from_card(card: game.Card):
         case "six":
             image_rank = "6"
     image_suit = str(card.suit.name).lower()
-    return f"card_images/{image_suit}_{image_rank}.png"
+    return f"/Users/Skyler/Coding/PythonPrograms/NinetyNine/ninety_nine/card_images/{image_suit}_{image_rank}.png"
 
 
 if __name__ == "__main__":
