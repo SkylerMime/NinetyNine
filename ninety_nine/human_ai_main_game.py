@@ -19,7 +19,7 @@ def main(random_seed=None):
     game_state = game.GameState(random_seed)
     num_players = len(game_state.PLAYERS)
 
-    print(f"The trump suit is: {game_state.TRUMP_SUIT}")
+    print(f"The trump suit is: {game_state.TRUMP_SUIT.name.capitalize()}")
 
     for player_num in range(num_players):
         if player_types[player_num] == PlayerTypes.HUMAN:

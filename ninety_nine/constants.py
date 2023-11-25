@@ -15,7 +15,7 @@ PLAYER_TYPES = {0: PlayerTypes.HUMAN, 1: PlayerTypes.RANDOM, 2: PlayerTypes.RAND
 
 
 class PlayerState(Enum):
-    WAITING = 0
+    BIDDING = 0
     PLAYING = 1
     DONE = 2
 

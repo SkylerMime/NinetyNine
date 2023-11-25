@@ -40,7 +40,7 @@ class Player:
         self.hand = hand_cards
         self.bid = set()
         self.tricks_won = 0
-        self.state = PlayerState.WAITING
+        self.state = PlayerState.BIDDING
 
     def make_bid(self, bid_cards: set):
         self.hand = self.hand - bid_cards
