@@ -14,7 +14,7 @@ class PlayerTypes(Enum):
 PLAYER_TYPES = {0: PlayerTypes.HUMAN, 1: PlayerTypes.RANDOM, 2: PlayerTypes.RANDOM}
 
 
-class PlayerState(Enum):
+class GameStage(Enum):
     BIDDING = 0
     PLAYING = 1
     DONE = 2

@@ -17,6 +17,26 @@ def bid():
 
 
 @pytest.fixture
+def ranks_subset():
+    return {Rank.ACE, Rank.KING}
+
+
+@pytest.fixture
+def suits_subset():
+    return {Suit.HEARTS, Suit.CLUBS}
+
+
+@pytest.fixture
+def cards_subset():
+    return {
+        Card(Rank.ACE, Suit.HEARTS),
+        Card(Rank.KING, Suit.HEARTS),
+        Card(Rank.ACE, Suit.CLUBS),
+        Card(Rank.KING, Suit.CLUBS),
+    }
+
+
+@pytest.fixture
 def human_bid_mock():
     mock = Mock()
     mock.side_effect = ["AS", "KS", "QS"]
@@ -26,7 +46,11 @@ def human_bid_mock():
 @pytest.fixture
 def random_bid_mock():
     mock = Mock()
-    mock.side_effect = [Card(Rank.ACE, Suit.SPADES), Card(Rank.KING, Suit.SPADES), Card(Rank.QUEEN, Suit.SPADES)]
+    mock.side_effect = [
+        Card(Rank.ACE, Suit.SPADES),
+        Card(Rank.KING, Suit.SPADES),
+        Card(Rank.QUEEN, Suit.SPADES),
+    ]
     return mock
 
 

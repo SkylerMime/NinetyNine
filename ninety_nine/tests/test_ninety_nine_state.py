@@ -1,6 +1,6 @@
 import pytest
 from ninety_nine import ninety_nine_state as game
-from ninety_nine.constants import Suit, PlayerState
+from ninety_nine.constants import Suit, GameStage
 
 
 class TestPLayer:
@@ -11,7 +11,7 @@ class TestPLayer:
         assert len(player_after_bidding.hand) == 9
 
     def test_player_bid_changes_state(self, player_after_bidding):
-        assert player_after_bidding.state == PlayerState.PLAYING
+        assert player_after_bidding.state == GameStage.PLAYING
 
     def test_player_card_play(
         self, player_after_bidding, seven_of_hearts, hand_after_playing
@@ -23,7 +23,7 @@ class TestPLayer:
         self, seven_of_hearts, player_with_one_card
     ):
         player_with_one_card.play_card(seven_of_hearts)
-        assert player_with_one_card.state == PlayerState.DONE
+        assert player_with_one_card.state == GameStage.DONE
 
     def test_player_wrong_card_throws_error(self, player_after_bidding, six_of_spades):
         with pytest.raises(KeyError):
@@ -194,3 +194,6 @@ class TestFunctions:
             "lead_player": 0,
         }
         assert game.get_trick_winner(trick, Suit.CLUBS) == 0
+
+    def test_get_some_cards(self, ranks_subset, suits_subset, cards_subset):
+        assert game.get_all_cards(suits_subset, ranks_subset) == cards_subset

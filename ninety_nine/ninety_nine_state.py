@@ -1,5 +1,5 @@
 import random
-from ninety_nine.constants import Rank, Suit, PlayerState
+from ninety_nine.constants import Rank, Suit, GameStage
 from typing import TypedDict
 
 
@@ -40,18 +40,18 @@ class Player:
         self.hand = hand_cards
         self.bid = set()
         self.tricks_won = 0
-        self.state = PlayerState.BIDDING
+        self.state = GameStage.BIDDING
 
     def make_bid(self, bid_cards: set):
         self.hand = self.hand - bid_cards
         self.bid = bid_cards
-        self.state = PlayerState.PLAYING
+        self.state = GameStage.PLAYING
 
     def play_card(self, card_to_play: Card):
         try:
             self.hand.remove(card_to_play)
             if len(self.hand) < 1:
-                self.state = PlayerState.DONE
+                self.state = GameStage.DONE
         except KeyError:
             raise KeyError("card must be an element of the player's hand")
 
@@ -82,17 +82,14 @@ class GameState:
         self.PLAYERS = {}
         self.trick_history = []
         self.next_to_play = None
+        self.stage = GameStage.BIDDING
         if start_new_game:
             self.start_new_game(random_seed)
 
     def start_new_game(self, random_seed=None):
         random.seed(random_seed)
         # Create a list with all the cards
-        all_cards = []
-        for suit in Suit:
-            for rank in Rank:
-                card = Card(rank, suit)
-                all_cards.append(card)
+        all_cards = list(get_all_cards())
         eldest_hand, middle_hand, youngest_hand = get_three_shuffled_hands(
             all_cards, random_seed
         )
@@ -114,6 +111,7 @@ class GameState:
             new_state.PLAYERS[player_num] = self.PLAYERS[player_num].copy()
         new_state.trick_history = self.trick_history.copy()
         new_state.next_to_play = self.next_to_play
+        new_state.stage = self.stage
         return new_state
 
     def get_current_trick_winner(self):
@@ -147,6 +145,14 @@ def get_three_shuffled_hands(cards_to_deal: list[Card], random_seed=None):
         second_hand.add(cards_to_deal.pop())
         third_hand.add(cards_to_deal.pop())
     return first_hand, second_hand, third_hand
+
+
+def get_all_cards(suits: set = Suit, ranks: set = Rank):
+    all_cards = set()
+    for suit in suits:
+        for rank in ranks:
+            all_cards.add(Card(rank, suit))
+    return all_cards
 
 
 def is_full(trick: Trick):
@@ -231,7 +237,11 @@ def make_card_play(game_state: GameState, player: int, card: Card):
         next_state.next_to_play = trick_winner
         next_state.PLAYERS[trick_winner].tricks_won += 1
 
-        next_state.current_trick = {"lead_player": next_state.current_lead, "cards": {}, "winner": None}
+        next_state.current_trick = {
+            "lead_player": next_state.current_lead,
+            "cards": {},
+            "winner": None,
+        }
 
     else:
         next_state.next_to_play = (game_state.next_to_play + 1) % len(

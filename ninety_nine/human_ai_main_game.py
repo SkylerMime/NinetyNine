@@ -27,7 +27,11 @@ def main(random_seed=None):
         elif player_types[player_num] == PlayerTypes.RANDOM:
             get_random_bid(game_state.PLAYERS[player_num])
 
+    game_state.stage = game.GameStage.PLAYING
+
     final_state = play_one_hand_of_ninety_nine(game_state, player_types=player_types)
+
+    final_state.stage = game.GameStage.DONE
 
     print_line()
     print("The hand has ended")
@@ -39,7 +43,9 @@ def main(random_seed=None):
     print_line()
 
 
-def play_one_hand_of_ninety_nine(game_state, num_tricks=NUM_TRICKS, player_types=PLAYER_TYPES):
+def play_one_hand_of_ninety_nine(
+    game_state, num_tricks=NUM_TRICKS, player_types=PLAYER_TYPES
+):
     next_to_play = 0
 
     for trick in range(num_tricks * NUM_PLAYERS):
