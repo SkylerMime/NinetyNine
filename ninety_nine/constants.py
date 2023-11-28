@@ -10,9 +10,16 @@ class PlayerTypes(Enum):
     HUMAN = 0
     RANDOM = 1
     TRICK_COMPLETE = 2
+    WAITING_FOR_COMPUTER = 3
 
 
-PLAYER_TYPES = {0: PlayerTypes.HUMAN, 1: PlayerTypes.RANDOM, 2: PlayerTypes.RANDOM, None: PlayerTypes.TRICK_COMPLETE}
+PLAYER_TYPES = {
+    0: PlayerTypes.HUMAN,
+    1: PlayerTypes.RANDOM,
+    2: PlayerTypes.RANDOM,
+    None: PlayerTypes.TRICK_COMPLETE,
+    -1: PlayerTypes.WAITING_FOR_COMPUTER,
+}
 
 
 class GameStage(Enum):

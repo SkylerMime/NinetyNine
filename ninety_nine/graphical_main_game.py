@@ -78,6 +78,8 @@ BUTTON_TEXT_COLOR = WHITE
 TEXTVIEW_COLOR = WHITE
 TEXTVIEW_TEXT_COLOR = BLACK
 
+MILLISECONDS_BETWEEN_PLAYS = 900
+
 
 class TextView:
     def __init__(self):
@@ -259,7 +261,10 @@ def do_playing_loop(
     continue_button.render_message("Next trick")
     continue_button.visible = False
     center_cards(clickable_hand)
+    time_of_next_play = pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
     while game_state.stage == GameStage.PLAYING:
+        if pygame.time.get_ticks() > time_of_next_play and game_state.next_to_play == -1:
+            game_state.next_to_play = 1
         # process player inputs
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -268,10 +273,10 @@ def do_playing_loop(
             if event.type == pygame.MOUSEBUTTONUP:
                 clicked_card = get_card_from_click(event.pos, clickable_hand)
                 if (
-                    clicked_card
+                    game_state.next_to_play == HUMAN_PLAYER_NUM
+                    and clicked_card
                     and clicked_card.get_card()
                     in game.get_legal_card_plays(game_state, HUMAN_PLAYER_NUM)
-                    and game_state.next_to_play == HUMAN_PLAYER_NUM
                 ):
                     game_state = game.make_card_play(
                         game_state, HUMAN_PLAYER_NUM, clicked_card.get_card()
@@ -281,6 +286,8 @@ def do_playing_loop(
                     )
                     clickable_hand = get_clickable_cards(sorted_hand, images_dict)
                     center_cards(clickable_hand)
+                    time_of_next_play = pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
+                    game_state.next_to_play = -1
                 if continue_button.visible and continue_button.rect.collidepoint(
                     event.pos
                 ):
@@ -288,17 +295,18 @@ def do_playing_loop(
                     continue_button.visible = False
 
         # logical updates here
-        if player_types[game_state.next_to_play] == PlayerTypes.RANDOM:
+        if player_types[game_state.next_to_play] == PlayerTypes.RANDOM and pygame.time.get_ticks() > time_of_next_play:
             card_to_play = random.choice(
                 list(game.get_legal_card_plays(game_state, game_state.next_to_play))
             )
             game_state = game.make_card_play(
                 game_state, game_state.next_to_play, card_to_play
             )
+            time_of_next_play = pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
 
-        continue_button.visible = game.is_full(game_state.current_trick)
+        continue_button.visible = game.is_full(game_state.current_trick) and not game.game_is_over(game_state)
 
-        if game.game_is_over(game_state):
+        if game.game_is_over(game_state) and pygame.time.get_ticks() > time_of_next_play:
             game_state.stage = GameStage.DONE
 
         # render graphics here

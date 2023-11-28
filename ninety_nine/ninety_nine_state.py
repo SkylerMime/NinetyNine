@@ -163,7 +163,7 @@ def is_full(trick: Trick):
         return True
 
 
-def get_legal_card_plays(game_state: GameState, player_num: int):
+def get_legal_card_plays(game_state: GameState, player_num: int | None):
     if player_num not in game_state.PLAYERS.keys():
         raise KeyError("player must be 0, 1, or 2")
     if game_state.next_to_play != player_num:
