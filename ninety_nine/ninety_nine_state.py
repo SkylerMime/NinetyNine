@@ -230,23 +230,32 @@ def make_card_play(game_state: GameState, player: int, card: Card):
     next_state.current_trick["cards"][player] = card
 
     if is_full(next_state.current_trick):
-        trick_winner = next_state.get_current_trick_winner()
-        next_state.current_trick["winner"] = trick_winner
-        next_state.trick_history.append(next_state.current_trick)
-        next_state.current_lead = trick_winner
-        next_state.next_to_play = trick_winner
-        next_state.PLAYERS[trick_winner].tricks_won += 1
-
-        next_state.current_trick = {
-            "lead_player": next_state.current_lead,
-            "cards": {},
-            "winner": None,
-        }
-
+        next_state.next_to_play = None
     else:
         next_state.next_to_play = (game_state.next_to_play + 1) % len(
             game_state.PLAYERS
         )
+
+    return next_state
+
+
+def finish_trick(game_state: GameState):
+    next_state = game_state.copy_state()
+    if not is_full(next_state.current_trick):
+        raise KeyError("Some players still need to play")
+
+    trick_winner = next_state.get_current_trick_winner()
+    next_state.current_trick["winner"] = trick_winner
+    next_state.trick_history.append(next_state.current_trick)
+    next_state.current_lead = trick_winner
+    next_state.next_to_play = trick_winner
+    next_state.PLAYERS[trick_winner].tricks_won += 1
+
+    next_state.current_trick = {
+        "lead_player": next_state.current_lead,
+        "cards": {},
+        "winner": None,
+    }
 
     return next_state
 

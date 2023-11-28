@@ -1,8 +1,10 @@
 import pytest
+from unittest.mock import Mock
+import ninety_nine.human_ai_main_game as game_display
 from ninety_nine import ninety_nine_state as game
 from ninety_nine.ninety_nine_state import Card
 from ninety_nine.constants import Rank, Suit
-from unittest.mock import Mock
+
 
 ARBITRARY_SEED = 5
 
@@ -203,6 +205,7 @@ def game_state_two_players_made_bid(game_state_after_bidding, different_three_bi
     game_state_after_bidding.PLAYERS[0].tricks_won = 4
     game_state_after_bidding.PLAYERS[1].tricks_won = 4
     game_state_after_bidding.PLAYERS[2].tricks_won = 1
+    game_state_after_bidding.stage = game.GameStage.DONE
     for player_num, player in game_state_after_bidding.PLAYERS.items():
         player.hand = set()
         player.bid = different_three_bids[player_num]
@@ -283,12 +286,15 @@ def trick_of_three_cards(seven_of_hearts, six_of_spades, six_of_hearts) -> game.
 @pytest.fixture
 def game_state_with_one_trick(game_state_after_dealing, trick_of_three_cards):
     game_state_after_dealing.current_trick = trick_of_three_cards
+    game_state_after_dealing.stage = game.GameStage.PLAYING
     return game_state_after_dealing
 
 
 @pytest.fixture
 def game_state_with_two_card_trick(game_state_after_dealing, trick_of_two_cards):
     game_state_after_dealing.current_trick = trick_of_two_cards
+    game_state_after_dealing.next_to_play = 2
+    game_state_after_dealing.stage = game.GameStage.PLAYING
     return game_state_after_dealing
 
 
@@ -353,6 +359,11 @@ def three_hands_of_nine(ace_of_spades, six_of_hearts, ten_of_hearts):
         game.Card(Rank.JACK, Suit.CLUBS),
     }
     return hand0, hand1, hand2
+
+
+@pytest.fixture
+def sorted_first_hand(three_hands_of_nine):
+    return game_display.get_sorted_cards(three_hands_of_nine[0])
 
 
 @pytest.fixture

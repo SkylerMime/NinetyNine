@@ -9,9 +9,10 @@ NUM_PLAYERS = 3
 class PlayerTypes(Enum):
     HUMAN = 0
     RANDOM = 1
+    TRICK_COMPLETE = 2
 
 
-PLAYER_TYPES = {0: PlayerTypes.HUMAN, 1: PlayerTypes.RANDOM, 2: PlayerTypes.RANDOM}
+PLAYER_TYPES = {0: PlayerTypes.HUMAN, 1: PlayerTypes.RANDOM, 2: PlayerTypes.RANDOM, None: PlayerTypes.TRICK_COMPLETE}
 
 
 class GameStage(Enum):

@@ -58,6 +58,8 @@ def play_one_hand_of_ninety_nine(
             print_card(card_to_play)
             print()
             game_state = game.make_card_play(game_state, next_to_play, card_to_play)
+            if game.is_full(game_state.current_trick):
+                game_state = game.finish_trick(game_state)
         elif player_types[next_to_play] == PlayerTypes.RANDOM:
             print(f"Player {next_to_play}'s move is: ")
             card_to_play = random.choice(
@@ -66,6 +68,8 @@ def play_one_hand_of_ninety_nine(
             print_card(card_to_play)
             print()
             game_state = game.make_card_play(game_state, next_to_play, card_to_play)
+            if game.is_full(game_state.current_trick):
+                game_state = game.finish_trick(game_state)
         next_to_play = game_state.next_to_play
         if len(game_state.current_trick["cards"]) == 0:
             last_trick = game_state.trick_history[-1]

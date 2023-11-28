@@ -12,20 +12,26 @@ from ninety_nine.graphical_main_game import (
     IMAGES_DIRECTORY_PATH,
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
-    HAND_X_POSITION,
-    HAND_Y_POSITION,
+    FULL_HAND_LEFT,
+    HAND_TOP,
     SPACE_BETWEEN_CARDS,
+    TEXTVIEW_WIDTH,
+    TEXTVIEW_HEIGHT,
+    TEXTVIEW_TOP,
+    TEXTVIEW_LEFT,
+    TEXTVIEW_COLOR,
+    TEXTVIEW_TEXT_COLOR,
 )
 
 
 @pytest.fixture
-def clickable_hand(sorted_cards):
+def clickable_hand(sorted_first_hand):
     hand = []
-    for card_num in range(len(sorted_cards)):
-        card = sorted_cards[card_num]
+    for card_num in range(len(sorted_first_hand)):
+        card = sorted_first_hand[card_num]
         clickable_card = ClickableCard(card.rank, card.suit)
         clickable_card.card_image = graphics.load_bordered_image_of_card(clickable_card)
-        clickable_card.set_left(HAND_X_POSITION + card_num * SPACE_BETWEEN_CARDS)
+        clickable_card.set_left(FULL_HAND_LEFT + card_num * SPACE_BETWEEN_CARDS)
         hand.append(clickable_card)
     return hand
 
@@ -54,18 +60,18 @@ def full_images_dict():
 
 
 @pytest.fixture
-def clickable_nine_of_clubs():
-    card = ClickableCard(Rank.NINE, Suit.CLUBS)
-    card.set_left(HAND_X_POSITION)
-    card.set_top(HAND_Y_POSITION)
+def clickable_six_of_clubs():
+    card = ClickableCard(Rank.SIX, Suit.CLUBS)
+    card.set_left(FULL_HAND_LEFT)
+    card.set_top(HAND_TOP)
     return card
 
 
 @pytest.fixture
-def clickable_eight_of_clubs():
-    card = ClickableCard(Rank.EIGHT, Suit.CLUBS)
-    card.set_left(HAND_X_POSITION + SPACE_BETWEEN_CARDS)
-    card.set_top(HAND_Y_POSITION)
+def clickable_ace_of_clubs():
+    card = ClickableCard(Rank.ACE, Suit.CLUBS)
+    card.set_left(FULL_HAND_LEFT + SPACE_BETWEEN_CARDS)
+    card.set_top(HAND_TOP)
     return card
 
 
@@ -77,10 +83,11 @@ def test_make_images_dict(cards_subset):
 
 
 def test_make_clickable_cards_from_starting_hand(
-    sorted_cards, clickable_hand, full_images_dict
+    sorted_first_hand, clickable_hand, full_images_dict
 ):
     assert (
-        graphics.get_clickable_cards(sorted_cards, full_images_dict) == clickable_hand
+        graphics.get_clickable_cards(sorted_first_hand, full_images_dict)
+        == clickable_hand
     )
 
 
@@ -89,26 +96,66 @@ def test_get_images_from_cards(cards_subset, full_images_dict):
     assert len(list_of_images) == 4
 
 
-def test_player_clicks_on_first(clickable_hand, clickable_nine_of_clubs):
+def test_player_clicks_on_first(clickable_hand, clickable_ace_of_clubs):
     assert (
-        graphics.get_card_from_click(
-            [HAND_X_POSITION + 3, HAND_Y_POSITION + 3], clickable_hand
-        )
-        == clickable_nine_of_clubs
+        graphics.get_card_from_click([FULL_HAND_LEFT + 3, HAND_TOP + 3], clickable_hand)
+        == clickable_ace_of_clubs
     )
 
 
-def test_player_clicks_on_second(clickable_hand, clickable_eight_of_clubs):
+def test_player_clicks_on_second(clickable_hand, clickable_six_of_clubs):
     assert (
         graphics.get_card_from_click(
-            [HAND_X_POSITION + SPACE_BETWEEN_CARDS + 3, HAND_Y_POSITION + 3],
+            [FULL_HAND_LEFT + SPACE_BETWEEN_CARDS + 3, HAND_TOP + 3],
             clickable_hand,
         )
-        == clickable_eight_of_clubs
+        == clickable_six_of_clubs
     )
 
 
 def test_player_clicks_nothing(clickable_hand):
-    assert (
-        graphics.get_card_from_click([10, 10], clickable_hand) is None
+    assert graphics.get_card_from_click([10, 10], clickable_hand) is None
+
+
+@pytest.fixture
+def initialize_pygame():
+    pygame.init()
+
+
+@pytest.fixture
+def clubs_trump_message(initialize_pygame):
+    message = graphics.TextView()
+    message.rect = pygame.Rect
+    message.rect = pygame.Rect(
+        TEXTVIEW_LEFT, TEXTVIEW_TOP, TEXTVIEW_WIDTH, TEXTVIEW_HEIGHT
     )
+    message.bg_color = TEXTVIEW_COLOR
+    message.text_color = TEXTVIEW_TEXT_COLOR
+    message.render_message(f"Trump Suit: {Suit.CLUBS.name.capitalize()}")
+    return message
+
+
+def test_playing_phase(
+    game_state_with_two_card_trick,
+    clickable_hand,
+    full_images_dict,
+    clubs_trump_message,
+    initialize_pygame,
+):
+    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    assert (
+        graphics.do_playing_loop(
+            game_state_with_two_card_trick,
+            clickable_hand,
+            full_images_dict,
+            screen,
+            pygame.time.Clock(),
+            clubs_trump_message,
+        )
+        is not None
+    )
+
+
+def test_final_scores(game_state_two_players_made_bid, initialize_pygame):
+    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    graphics.display_final_scores(screen, game_state_two_players_made_bid, pygame.time.Clock())
