@@ -43,7 +43,9 @@ class TestGameState:
 
     def test_king_beats_six_and_nine(self, game_state_with_six_nine_and_king_of_clubs):
         game_state_with_six_nine_and_king_of_clubs.current_lead = 0
-        assert game_state_with_six_nine_and_king_of_clubs.get_current_trick_winner() == 2
+        assert (
+            game_state_with_six_nine_and_king_of_clubs.get_current_trick_winner() == 2
+        )
 
     def test_copy_state_leaves_original_trick_unchanged(
         self, game_state_after_dealing, ace_of_spades
@@ -96,6 +98,7 @@ class TestFunctions:
         finish_trick_state = game.make_card_play(
             game_state_with_two_card_trick, player_to_move, six_of_hearts
         )
+        finish_trick_state = game.finish_trick(finish_trick_state)
         assert finish_trick_state.current_lead == 0
         assert finish_trick_state.next_to_play == 0
 
@@ -104,11 +107,14 @@ class TestFunctions:
     ):
         player_to_move = 2
         game_state_with_six_club_and_nine_club.current_lead = 0
-        game_state_with_six_club_and_nine_club.PLAYERS[player_to_move].hand.add(king_of_clubs)
+        game_state_with_six_club_and_nine_club.PLAYERS[player_to_move].hand.add(
+            king_of_clubs
+        )
         game_state_with_six_club_and_nine_club.next_to_play = player_to_move
         finish_trick_state = game.make_card_play(
             game_state_with_six_club_and_nine_club, player_to_move, king_of_clubs
         )
+        finish_trick_state = game.finish_trick(finish_trick_state)
         assert finish_trick_state.current_lead == 2
         assert finish_trick_state.next_to_play == 2
 
@@ -124,6 +130,7 @@ class TestFunctions:
         finish_trick_state = game.make_card_play(
             game_state_with_two_card_trick, player_to_move, six_of_hearts
         )
+        finish_trick_state = game.finish_trick(finish_trick_state)
         assert finish_trick_state.PLAYERS[player_to_win].tricks_won == 5
         assert game_state_with_two_card_trick.PLAYERS[player_to_win].tricks_won == 4
 

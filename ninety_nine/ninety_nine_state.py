@@ -1,16 +1,13 @@
 import random
 from ninety_nine.constants import Rank, Suit, GameStage
 from typing import TypedDict
+from dataclasses import dataclass
 
 
+@dataclass
 class Card:
-    def __init__(self, rank: Rank | None, suit: Suit | None):
-        self.rank = rank
-        self.suit = suit
-
-    def __repr__(self):
-        class_name = type(self).__name__
-        return f"{class_name}({self.rank!r}, {self.suit!r}"
+    rank: Rank
+    suit: Suit
 
     def __lt__(self, other):
         if self.suit == other.suit:
