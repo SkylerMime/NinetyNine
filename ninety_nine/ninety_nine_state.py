@@ -257,7 +257,7 @@ def finish_trick(game_state: GameState):
     return next_state
 
 
-def bid_value(bid: set):
+def bid_value(bid: set | list):
     contracted_tricks = 0
     for card in bid:
         contracted_tricks += card.suit.value

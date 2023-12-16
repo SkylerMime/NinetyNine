@@ -1,5 +1,6 @@
 import pytest
 from ninety_nine import graphical_main_game as graphics
+from ninety_nine import ninety_nine_state as game
 from ninety_nine.ninety_nine_state import Card
 from ninety_nine.constants import (
     Rank,
@@ -46,6 +47,15 @@ def clickable_ace_of_clubs():
     card.set_left(FULL_HAND_LEFT)
     card.set_top(HAND_TOP)
     return card
+
+
+@pytest.fixture
+def clickable_partial_bid(clickable_six_of_clubs, clickable_ace_of_clubs):
+    return [clickable_six_of_clubs, clickable_ace_of_clubs]
+
+
+def test_get_bid_value(clickable_partial_bid):
+    assert game.bid_value(clickable_partial_bid) == 6
 
 
 def test_make_images_dict(cards_subset):

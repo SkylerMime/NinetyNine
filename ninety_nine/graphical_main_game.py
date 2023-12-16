@@ -49,6 +49,11 @@ TEXTVIEW_HEIGHT = 90
 TEXTVIEW_TOP = 10
 TEXTVIEW_LEFT = WINDOW_WIDTH - TEXTVIEW_WIDTH - 10
 
+BID_MESSAGE_WIDTH = 90
+BID_MESSAGE_HEIGHT = 90
+BID_MESSAGE_TOP = 110
+BID_MESSAGE_LEFT = WINDOW_WIDTH - BID_MESSAGE_WIDTH - 10
+
 PRIMARY_TRICK_TOP = BID_TOP + 20
 PRIMARY_TRICK_LEFT = WINDOW_WIDTH // 2 - CARD_WIDTH // 2
 
@@ -169,6 +174,14 @@ def main():
             f"Trump Suit: {game_state.TRUMP_SUIT.name.capitalize()}"
         )
 
+        bid_message = TextView()
+        bid_message.rect = pygame.Rect(
+            BID_MESSAGE_LEFT, BID_MESSAGE_TOP, BID_MESSAGE_WIDTH, BID_MESSAGE_HEIGHT
+        )
+        bid_message.bg_color = TEXTVIEW_COLOR
+        bid_message.text_color = TEXTVIEW_TEXT_COLOR
+        bid_message.render_message(f"{0}")
+
         sorted_hand = game_display.get_sorted_cards(human_player.hand)
         clickable_hand = get_clickable_cards(sorted_hand, images_dict)
         clickable_bid = get_clickable_cards(list(human_player.bid), images_dict)
@@ -185,6 +198,7 @@ def main():
             screen,
             clock,
             trump_message,
+            bid_message,
         )
 
         game_state = do_playing_loop(
@@ -194,6 +208,7 @@ def main():
             screen,
             clock,
             trump_message,
+            bid_message,
         )
 
         display_final_scores(screen, game_state, clock)
@@ -207,6 +222,7 @@ def do_bidding_loop(
     screen,
     clock,
     trump_message,
+    bid_message,
 ):
     continue_button = Button()
     continue_button.render_message("Confirm Bid")
@@ -217,17 +233,26 @@ def do_bidding_loop(
                 pygame.quit()
                 raise SystemExit
             if event.type == pygame.MOUSEBUTTONUP:
-                clicked_card = get_card_from_click(event.pos, clickable_hand)
-                if clicked_card:
+                clicked_card = get_card_from_click(
+                    event.pos, clickable_hand + clickable_bid
+                )
+                if clicked_card in clickable_hand:
                     human_player.hand.remove(clicked_card.get_card())
                     human_player.bid.add(clicked_card.get_card())
+                if clicked_card in clickable_bid:
+                    human_player.bid.remove(clicked_card.get_card())
+                    human_player.hand.add(clicked_card.get_card())
+                if clicked_card:
                     sorted_hand = game_display.get_sorted_cards(human_player.hand)
                     clickable_hand = get_clickable_cards(sorted_hand, images_dict)
                     clickable_bid = get_clickable_cards(
                         list(human_player.bid), images_dict
                     )
+                    new_bid_amount = game.bid_value(clickable_bid)
+                    bid_message.render_message(f"{new_bid_amount}")
                     center_cards(clickable_hand)
                     center_cards(clickable_bid, BID_TOP)
+
                 if continue_button.visible and continue_button.rect.collidepoint(
                     event.pos
                 ):
@@ -236,11 +261,14 @@ def do_bidding_loop(
 
         if len(human_player.bid) == 3:
             continue_button.visible = True
+        else:
+            continue_button.visible = False
 
         screen.fill(BACKGROUND_COLOR)
         draw_clickable_cards(screen, clickable_hand)
         draw_clickable_cards(screen, clickable_bid)
-        draw_trump_suit_message(screen, trump_message)
+        draw_message(screen, trump_message)
+        draw_message(screen, bid_message)
         if continue_button.visible:
             draw_button(screen, continue_button)
 
@@ -257,6 +285,7 @@ def do_playing_loop(
     screen,
     clock,
     trump_message,
+    bid_message,
     player_types=PLAYER_TYPES,
     human_player_num=HUMAN_PLAYER_NUM,
 ):
@@ -330,7 +359,8 @@ def do_playing_loop(
 
         draw_clickable_cards(screen, clickable_hand)
         draw_trick(screen, game_state.current_trick, images_dict)
-        draw_trump_suit_message(screen, trump_message)
+        draw_message(screen, trump_message)
+        draw_message(screen, bid_message)
         if continue_button.visible:
             draw_button(screen, continue_button)
 
@@ -402,7 +432,7 @@ def draw_button(screen: pygame.Surface, button: Button):
     screen.blit(button.rendered_text, text_rect)
 
 
-def draw_trump_suit_message(screen: pygame.Surface, message: TextView):
+def draw_message(screen: pygame.Surface, message: TextView):
     pygame.draw.rect(screen, message.bg_color, message.rect)
     text_rect = message.rendered_text.get_rect(center=message.rect.center)
     screen.blit(message.rendered_text, text_rect)
