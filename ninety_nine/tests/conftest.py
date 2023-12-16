@@ -1,12 +1,35 @@
 import pytest
+from ninety_nine import graphical_main_game as graphics
 from unittest.mock import Mock
 import ninety_nine.human_ai_main_game as game_display
 from ninety_nine import ninety_nine_state as game
 from ninety_nine.ninety_nine_state import Card
 from ninety_nine.constants import Rank, Suit
+from ninety_nine.graphical_main_game import (
+    ClickableCard,
+    FULL_HAND_LEFT,
+    SPACE_BETWEEN_CARDS,
+)
 
 
 ARBITRARY_SEED = 5
+
+
+@pytest.fixture
+def full_images_dict():
+    return graphics.make_images_dict(game.get_all_cards())
+
+
+@pytest.fixture
+def clickable_hand(sorted_first_hand):
+    hand = []
+    for card_num in range(len(sorted_first_hand)):
+        card = sorted_first_hand[card_num]
+        clickable_card = ClickableCard(card.rank, card.suit)
+        clickable_card.card_image = graphics.load_bordered_image_of_card(clickable_card)
+        clickable_card.set_left(FULL_HAND_LEFT + card_num * SPACE_BETWEEN_CARDS)
+        hand.append(clickable_card)
+    return hand
 
 
 @pytest.fixture

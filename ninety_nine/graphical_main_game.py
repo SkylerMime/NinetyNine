@@ -130,6 +130,10 @@ class ClickableCard(Card):
     def get_card(self):
         return Card(self.rank, self.suit)
 
+    def __repr__(self):
+        return f"""ClickableCard(rank={self.rank}, suit={self.suit},
+        left={self.clickable_area.left}, top={self.clickable_area.top})"""
+
     def __eq__(self, other):
         if isinstance(other, ClickableCard):
             return (
@@ -147,7 +151,6 @@ def main():
     clock = pygame.time.Clock()
 
     while True:
-
         player_types = PLAYER_TYPES
         # display_welcome_message()
         images_dict = make_images_dict(game.get_all_cards())
@@ -263,7 +266,10 @@ def do_playing_loop(
     center_cards(clickable_hand)
     time_of_next_play = pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
     while game_state.stage == GameStage.PLAYING:
-        if pygame.time.get_ticks() > time_of_next_play and game_state.next_to_play == -1:
+        if (
+            pygame.time.get_ticks() > time_of_next_play
+            and game_state.next_to_play == -1
+        ):
             game_state.next_to_play = 1
         # process player inputs
         for event in pygame.event.get():
@@ -286,7 +292,9 @@ def do_playing_loop(
                     )
                     clickable_hand = get_clickable_cards(sorted_hand, images_dict)
                     center_cards(clickable_hand)
-                    time_of_next_play = pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
+                    time_of_next_play = (
+                        pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
+                    )
                     game_state.next_to_play = -1
                 if continue_button.visible and continue_button.rect.collidepoint(
                     event.pos
@@ -295,7 +303,10 @@ def do_playing_loop(
                     continue_button.visible = False
 
         # logical updates here
-        if player_types[game_state.next_to_play] == PlayerTypes.RANDOM and pygame.time.get_ticks() > time_of_next_play:
+        if (
+            player_types[game_state.next_to_play] == PlayerTypes.RANDOM
+            and pygame.time.get_ticks() > time_of_next_play
+        ):
             card_to_play = random.choice(
                 list(game.get_legal_card_plays(game_state, game_state.next_to_play))
             )
@@ -304,9 +315,14 @@ def do_playing_loop(
             )
             time_of_next_play = pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
 
-        continue_button.visible = game.is_full(game_state.current_trick) and not game.game_is_over(game_state)
+        continue_button.visible = game.is_full(
+            game_state.current_trick
+        ) and not game.game_is_over(game_state)
 
-        if game.game_is_over(game_state) and pygame.time.get_ticks() > time_of_next_play:
+        if (
+            game.game_is_over(game_state)
+            and pygame.time.get_ticks() > time_of_next_play
+        ):
             game_state.stage = GameStage.DONE
 
         # render graphics here
@@ -336,7 +352,9 @@ def display_final_scores(screen, final_state, clock):
                 pygame.quit()
                 raise SystemExit
             if event.type == pygame.MOUSEBUTTONUP:
-                if continue_button.visible and continue_button.rect.collidepoint(event.pos):
+                if continue_button.visible and continue_button.rect.collidepoint(
+                    event.pos
+                ):
                     final_state.stage = GameStage.BIDDING
                     continue_button.visible = False
 
