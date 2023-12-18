@@ -17,19 +17,17 @@ from ninety_nine.graphical_main_game import (
 )
 
 
-@pytest.fixture
-def initialize_pygame(request):
+@pytest.fixture(scope="module")
+def pygame_instance():
     pygame.init()
 
-    def finalize():
-        pygame.quit()
+    yield pygame
 
-    request.addfinalizer(finalize)
-    return pygame
+    pygame.quit()
 
 
 @pytest.fixture
-def clubs_trump_message(initialize_pygame):
+def clubs_trump_message(pygame_instance):
     message = graphics.TextView()
     message.rect = pygame.Rect
     message.rect = pygame.Rect(
@@ -46,24 +44,25 @@ def test_playing_phase(
     clickable_hand,
     full_images_dict,
     clubs_trump_message,
-    initialize_pygame,
+    pygame_instance,
 ):
-    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    screen = pygame_instance.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     assert (
         graphics.do_playing_loop(
             game_state_with_two_card_trick,
             clickable_hand,
             full_images_dict,
             screen,
-            pygame.time.Clock(),
-            clubs_trump_message,
+            pygame_instance.time.Clock(),
+            None,
+            None,
         )
         is not None
     )
 
 
-def test_final_scores(game_state_two_players_made_bid, initialize_pygame):
-    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+def test_final_scores(game_state_two_players_made_bid, pygame_instance):
+    screen = pygame_instance.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     graphics.display_final_scores(
-        screen, game_state_two_players_made_bid, pygame.time.Clock()
+        screen, game_state_two_players_made_bid, pygame_instance.time.Clock()
     )
