@@ -267,8 +267,10 @@ def do_bidding_loop(
         screen.fill(BACKGROUND_COLOR)
         draw_clickable_cards(screen, clickable_hand)
         draw_clickable_cards(screen, clickable_bid)
-        draw_message(screen, trump_message)
-        draw_message(screen, bid_message)
+        if trump_message:
+            draw_message(screen, trump_message)
+        if bid_message:
+            draw_message(screen, bid_message)
         if continue_button.visible:
             draw_button(screen, continue_button)
 
@@ -356,11 +358,12 @@ def do_playing_loop(
 
         # render graphics here
         screen.fill(BACKGROUND_COLOR)
-
         draw_clickable_cards(screen, clickable_hand)
         draw_trick(screen, game_state.current_trick, images_dict)
-        draw_message(screen, trump_message)
-        draw_message(screen, bid_message)
+        if trump_message:
+            draw_message(screen, trump_message)
+        if bid_message:
+            draw_message(screen, bid_message)
         if continue_button.visible:
             draw_button(screen, continue_button)
 
