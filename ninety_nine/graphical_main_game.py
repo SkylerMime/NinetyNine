@@ -285,7 +285,7 @@ def do_playing_loop(
     clickable_hand,
     images_dict,
     screen,
-    clock,
+    clock: pygame.time.Clock,
     trump_message,
     bid_message,
     player_types=PLAYER_TYPES,

@@ -74,11 +74,11 @@ class Player:
 class GameState:
     def __init__(self, random_seed=None, start_new_game=True):
         self.TRUMP_SUIT = None
-        self.current_lead = None
+        self.current_lead: int = 0
         self.current_trick: Trick = {"cards": {}, "lead_player": 0, "winner": None}
         self.PLAYERS = {}
         self.trick_history = []
-        self.next_to_play = None
+        self.next_to_play: int = 0
         self.stage = GameStage.BIDDING
         if start_new_game:
             self.start_new_game(random_seed)
