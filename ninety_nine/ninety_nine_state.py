@@ -219,6 +219,8 @@ def make_card_play(game_state: GameState, player: int, card: Card):
         raise KeyError("player must be 0, 1, or 2")
     if game_state.next_to_play != player:
         raise KeyError("it is not this player's turn")
+    if is_full(game_state.current_trick):
+        raise ValueError("this trick is full")
 
     next_state = game_state.copy_state()
 

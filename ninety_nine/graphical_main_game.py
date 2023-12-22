@@ -301,6 +301,7 @@ def do_playing_loop(
             pygame.time.get_ticks() > time_of_next_play
             and game_state.next_to_play == -1
         ):
+            # The player has just finished their turn
             game_state.next_to_play = 1
         # process player inputs
         for event in pygame.event.get():
@@ -326,7 +327,6 @@ def do_playing_loop(
                     time_of_next_play = (
                         pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
                     )
-                    game_state.next_to_play = -1
                 if continue_button.visible and continue_button.rect.collidepoint(
                     event.pos
                 ):

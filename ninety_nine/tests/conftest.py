@@ -238,6 +238,7 @@ def game_state_two_players_made_bid(game_state_after_bidding, different_three_bi
 @pytest.fixture
 def game_state_after_dealing(three_hands_of_nine):
     new_state = game.GameState(random_seed=ARBITRARY_SEED)
+    new_state.stage = game.GameStage.PLAYING
     for i in range(len(new_state.PLAYERS)):
         new_state.PLAYERS[i].hand = three_hands_of_nine[i]
     new_state.TRUMP_SUIT = Suit.CLUBS
@@ -249,6 +250,11 @@ def game_state_after_dealing(three_hands_of_nine):
 def game_state_after_dealing_spades_trump(game_state_after_dealing):
     game_state_after_dealing.TRUMP_SUIT = Suit.SPADES
     return game_state_after_dealing
+
+
+def test_game_state(game_state_after_dealing_spades_trump):
+    assert game_state_after_dealing_spades_trump.next_to_play == 0
+    assert game_state_after_dealing_spades_trump.current_trick["lead_player"] == 0
 
 
 @pytest.fixture
