@@ -17,7 +17,8 @@ from ninety_nine.graphical_main_game import (
     IMAGES_DIRECTORY_PATH,
     FULL_HAND_LEFT,
     HAND_TOP,
-    SPACE_BETWEEN_CARDS, Button,
+    SPACE_BETWEEN_CARDS,
+    Button,
 )
 
 
@@ -131,6 +132,7 @@ class MockTimeAndClock:
 def mock_pygame(monkeypatch):
     """Disables pygame rendering for faster unit testing"""
     monkeypatch.setattr(pygame.display, "flip", lambda: None)
+    monkeypatch.setattr(graphics, "draw_button", lambda screen, button: None)
 
     def mock_render(self, message=None):
         pass
@@ -138,17 +140,21 @@ def mock_pygame(monkeypatch):
     monkeypatch.setattr(TextView, "render_message", mock_render)
 
 
-@pytest.fixture
-def game_state_before_end():
+@pytest.fixture(params=[1, 2], ids=["Player 1 leads", "Player 2 leads"])
+def game_state_before_end(request):
     game_state = game.GameState()
     game_state.stage = game.GameStage.PLAYING
     game_state.PLAYERS[0].hand = [Card(Rank.SEVEN, Suit.HEARTS)]
     game_state.PLAYERS[1].hand = [Card(Rank.SIX, Suit.HEARTS)]
     game_state.PLAYERS[2].hand = [Card(Rank.NINE, Suit.SPADES)]
-    game_state.current_trick = {"cards": {}, "lead_player": 1, "winner": None}
+    game_state.current_trick = {
+        "cards": {},
+        "lead_player": request.param,
+        "winner": None,
+    }
     game_state.TRUMP_SUIT = Suit.CLUBS
-    game_state.current_lead = 1
-    game_state.next_to_play = 1
+    game_state.current_lead = request.param
+    game_state.next_to_play = request.param
     return game_state
 
 
@@ -161,15 +167,20 @@ class MockOneEvent:
 class MockLastTrickEvent:
     def __init__(self, click_pos=(0, 0)):
         self.turn = 0
-        self.player_turn_order = [1, 2, 0, 0]
+        self.player_turn_order = [1, 2, 0, "continue"]
         self.click_pos = click_pos
+        self.continue_pos = (graphics.BUTTON_LEFT + 3, graphics.BUTTON_TOP + 3)
 
     def get(self):
         this_turn_events = []
-        if self.player_turn_order[self.turn] == 0:
+        this_turn_event = self.player_turn_order[self.turn]
+        if this_turn_event in (0, "continue"):
             click_event = MockOneEvent()
             click_event.type = pygame.MOUSEBUTTONUP
-            click_event.pos = self.click_pos
+            if this_turn_event == 0:
+                click_event.pos = self.click_pos
+            elif this_turn_event == "continue":
+                click_event.pos = self.continue_pos
             this_turn_events.append(click_event)
         self.turn += 1
         return this_turn_events
@@ -191,6 +202,10 @@ def test_playing_loop_last_trick_ends_game(
     card_area = clickable_human_hand[0].clickable_area
     click_pos = card_area.centerx, card_area.centery
     event = MockLastTrickEvent(click_pos)
+    final_scores = {0: 1, 1: 20, 2: 20}
+    if game_state_before_end.current_lead == 2:
+        event.player_turn_order = [2, 0, 1, "continue"]
+        final_scores = {0: 20, 1: 20, 2: 1}
     monkeypatch.setattr(pygame, "event", event)
     mock_screen = MockScreen()
     mock_time = MockTimeAndClock()
@@ -208,6 +223,9 @@ def test_playing_loop_last_trick_ends_game(
         None,
         None,
     )
+
+    assert game.get_scores(final_state) == final_scores
+
     assert len(final_state.PLAYERS[0].hand) == 0
     assert len(final_state.PLAYERS[1].hand) == 0
     assert len(final_state.PLAYERS[2].hand) == 0
@@ -257,6 +275,7 @@ def all_tricks_plays():
         (0, Card(Rank.JACK, Suit.SPADES)),
         (1, Card(Rank.SEVEN, Suit.HEARTS)),
         (2, Card(Rank.TEN, Suit.HEARTS)),
+        ("continue", None),
     ]
 
 
@@ -278,7 +297,7 @@ def all_random_plays(all_tricks_plays):
 
 
 def test_human_list_filtering(all_human_plays):
-    assert len(all_human_plays) == 17
+    assert len(all_human_plays) == 18
 
 
 def test_random_list_filtering(all_random_plays):
@@ -299,18 +318,23 @@ def all_events(all_tricks_plays):
         if play[0] == "continue":
             click_continue_event = MockOneEvent()
             click_continue_event.type = pygame.MOUSEBUTTONUP
-            click_continue_event.pos = (graphics.BUTTON_LEFT + 2, graphics.BUTTON_TOP + 2)
+            click_continue_event.pos = (
+                graphics.BUTTON_LEFT + 2,
+                graphics.BUTTON_TOP + 2,
+            )
             all_events.append([click_continue_event])
     return all_events
 
 
 def test_click_event(mock_pygame):
     continue_button = Button()
-    assert continue_button.rect.collidepoint((graphics.BUTTON_LEFT + 2, graphics.BUTTON_TOP + 2))
+    assert continue_button.rect.collidepoint(
+        (graphics.BUTTON_LEFT + 2, graphics.BUTTON_TOP + 2)
+    )
 
 
 def test_events_fixture(all_events):
-    assert len(all_events) == 27 + 8
+    assert len(all_events) == 27 + 9
     assert len([event_list for event_list in all_events if event_list == []]) == 18
     assert isinstance(all_events[0][0], MockOneEvent)
     assert all_events[0][0].type == pygame.MOUSEBUTTONUP
@@ -348,7 +372,7 @@ def test_cards_event_mock(all_cards_event_mock, all_events):
             all_returns.append(next_event)
         except StopIteration:
             break
-    assert len(all_returns) == 27 + 8
+    assert len(all_returns) == 27 + 9
     assert all_returns == all_events
 
 
@@ -371,42 +395,6 @@ def test_playing_loop_all_cards_get_played(
     # We set the milliseconds between plays to a negative value so
     # `get_ticks() > time_of_next_play` will always evaluate True
     monkeypatch.setattr(graphics, "MILLISECONDS_BETWEEN_PLAYS", -1)
-    monkeypatch.setattr(graphics, "draw_button", lambda screen, button: None)
-
-    assert game_state_after_dealing_spades_trump.next_to_play == 0
-
-    final_state = graphics.do_playing_loop(
-        game_state_after_dealing_spades_trump,
-        clickable_hand,
-        images_dict,
-        mock_screen,
-        mock_time,
-        None,
-        None,
-    )
-
-    assert len(final_state.PLAYERS[1].hand) == 0
-
-def test_playing_loop_all_cards_get_played(
-    monkeypatch,
-    mock_pygame,
-    images_dict,
-    game_state_after_dealing_spades_trump,
-    all_cards_event_mock,
-    human_card_from_click_mock,
-    random_card_from_choice_mock,
-    clickable_hand,
-):
-    monkeypatch.setattr(random, "choice", random_card_from_choice_mock)
-    monkeypatch.setattr(graphics, "get_card_from_click", human_card_from_click_mock)
-    monkeypatch.setattr(pygame.event, "get", all_cards_event_mock)
-    mock_screen = MockScreen()
-    mock_time = MockTimeAndClock()
-    monkeypatch.setattr(pygame, "time", mock_time)
-    # We set the milliseconds between plays to a negative value so
-    # `get_ticks() > time_of_next_play` will always evaluate True
-    monkeypatch.setattr(graphics, "MILLISECONDS_BETWEEN_PLAYS", -1)
-    monkeypatch.setattr(graphics, "draw_button", lambda screen, button: None)
 
     assert game_state_after_dealing_spades_trump.next_to_play == 0
 

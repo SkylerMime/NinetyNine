@@ -1,6 +1,6 @@
 import random
 from ninety_nine.constants import Rank, Suit, GameStage
-from typing import TypedDict
+from typing import TypedDict, Dict
 from dataclasses import dataclass
 
 
@@ -76,7 +76,7 @@ class GameState:
         self.TRUMP_SUIT = None
         self.current_lead: int = 0
         self.current_trick: Trick = {"cards": {}, "lead_player": 0, "winner": None}
-        self.PLAYERS = {}
+        self.PLAYERS: Dict[int, Player] = {}
         self.trick_history = []
         self.next_to_play: int = 0
         self.stage = GameStage.BIDDING
@@ -246,9 +246,16 @@ def finish_trick(game_state: GameState):
     trick_winner = next_state.get_current_trick_winner()
     next_state.current_trick["winner"] = trick_winner
     next_state.trick_history.append(next_state.current_trick)
-    next_state.current_lead = trick_winner
-    next_state.next_to_play = trick_winner
     next_state.PLAYERS[trick_winner].tricks_won += 1
+
+    next_state.current_trick = {"cards": {}}
+
+    if game_is_over(next_state):
+        next_state.current_lead = None
+        next_state.next_to_play = None
+    else:
+        next_state.current_lead = trick_winner
+        next_state.next_to_play = trick_winner
 
     next_state.current_trick = {
         "lead_player": next_state.current_lead,
@@ -267,6 +274,8 @@ def bid_value(bid: set | list):
 
 
 def game_is_over(game_state: GameState):
+    if len(game_state.current_trick["cards"]) > 0:
+        return False
     for player in game_state.PLAYERS.values():
         if len(player.hand) > 0:
             return False
@@ -276,6 +285,8 @@ def game_is_over(game_state: GameState):
 def get_scores(final_state: GameState):
     if not game_is_over(final_state):
         raise KeyError("all cards should be played")
+    if len(final_state.current_trick["cards"]) > 0:
+        raise KeyError("current trick should be finalized")
 
     player_num_range = range(len(final_state.PLAYERS))
 

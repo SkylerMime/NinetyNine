@@ -54,6 +54,11 @@ BID_MESSAGE_HEIGHT = 90
 BID_MESSAGE_TOP = 110
 BID_MESSAGE_LEFT = WINDOW_WIDTH - BID_MESSAGE_WIDTH - 10
 
+TRICKS_TAKEN_MESSAGE_WIDTH = 90
+TRICKS_TAKEN_MESSAGE_HEIGHT = 90
+TRICKS_TAKEN_MESSAGE_TOP = WINDOW_HEIGHT - TRICKS_TAKEN_MESSAGE_HEIGHT - 10
+TRICKS_TAKEN_MESSAGE_LEFT = WINDOW_WIDTH - TRICKS_TAKEN_MESSAGE_WIDTH - 10
+
 PRIMARY_TRICK_TOP = BID_TOP + 20
 PRIMARY_TRICK_LEFT = WINDOW_WIDTH // 2 - CARD_WIDTH // 2
 
@@ -182,6 +187,17 @@ def main():
         bid_message.text_color = TEXTVIEW_TEXT_COLOR
         bid_message.render_message(f"{0}")
 
+        tricks_taken_message = TextView()
+        tricks_taken_message.rect = pygame.Rect(
+            TRICKS_TAKEN_MESSAGE_LEFT,
+            TRICKS_TAKEN_MESSAGE_TOP,
+            TRICKS_TAKEN_MESSAGE_WIDTH,
+            TRICKS_TAKEN_MESSAGE_HEIGHT,
+        )
+        tricks_taken_message.bg_color = TEXTVIEW_COLOR
+        tricks_taken_message.text_color = TEXTVIEW_TEXT_COLOR
+        tricks_taken_message.render_message(f"{0}")
+
         sorted_hand = game_display.get_sorted_cards(human_player.hand)
         clickable_hand = get_clickable_cards(sorted_hand, images_dict)
         clickable_bid = get_clickable_cards(list(human_player.bid), images_dict)
@@ -209,6 +225,7 @@ def main():
             clock,
             trump_message,
             bid_message,
+            tricks_taken_message,
         )
 
         display_final_scores(screen, game_state, clock)
@@ -286,8 +303,9 @@ def do_playing_loop(
     images_dict,
     screen,
     clock: pygame.time.Clock,
-    trump_message,
-    bid_message,
+    trump_message=None,
+    bid_message=None,
+    tricks_taken_message=None,
     player_types=PLAYER_TYPES,
     human_player_num=HUMAN_PLAYER_NUM,
 ):
@@ -346,15 +364,17 @@ def do_playing_loop(
             )
             time_of_next_play = pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
 
-        continue_button.visible = game.is_full(
-            game_state.current_trick
-        ) and not game.game_is_over(game_state)
+        continue_button.visible = game.is_full(game_state.current_trick)
 
         if (
             game.game_is_over(game_state)
             and pygame.time.get_ticks() > time_of_next_play
         ):
             game_state.stage = GameStage.DONE
+
+        if tricks_taken_message:
+            tricks_taken = game_state.PLAYERS[HUMAN_PLAYER_NUM].tricks_won
+            tricks_taken_message.render_message(f"{tricks_taken}")
 
         # render graphics here
         screen.fill(BACKGROUND_COLOR)
@@ -364,6 +384,9 @@ def do_playing_loop(
             draw_message(screen, trump_message)
         if bid_message:
             draw_message(screen, bid_message)
+        if tricks_taken_message:
+            draw_message(screen, tricks_taken_message)
+
         if continue_button.visible:
             draw_button(screen, continue_button)
 
