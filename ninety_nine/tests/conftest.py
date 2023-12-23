@@ -3,7 +3,7 @@ from ninety_nine import graphical_main_game as graphics
 from unittest.mock import Mock
 import ninety_nine.human_ai_main_game as game_display
 from ninety_nine import ninety_nine_state as game
-from ninety_nine.ninety_nine_state import Card
+from ninety_nine.ninety_nine_state import Card, Trick
 from ninety_nine.constants import Rank, Suit
 from ninety_nine.graphical_main_game import (
     ClickableCard,
@@ -254,7 +254,7 @@ def game_state_after_dealing_spades_trump(game_state_after_dealing):
 
 def test_game_state(game_state_after_dealing_spades_trump):
     assert game_state_after_dealing_spades_trump.next_to_play == 0
-    assert game_state_after_dealing_spades_trump.current_trick["lead_player"] == 0
+    assert game_state_after_dealing_spades_trump.current_trick.lead_player == 0
 
 
 @pytest.fixture
@@ -276,40 +276,40 @@ def ten_of_hearts():
 
 @pytest.fixture
 def trick_of_two_cards(seven_of_hearts, six_of_spades) -> game.Trick:
-    return {
-        "cards": {0: seven_of_hearts, 1: six_of_spades},
-        "lead_player": 0,
-        "winner": None,
-    }
+    return Trick(
+        cards={0: seven_of_hearts, 1: six_of_spades},
+        lead_player=0,
+        winner=None,
+    )
 
 
 @pytest.fixture
 def trick_of_six_club_and_nine_club(six_of_clubs, nine_of_clubs) -> game.Trick:
-    return {
-        "cards": {0: six_of_clubs, 1: nine_of_clubs},
-        "lead_player": 0,
-        "winner": None,
-    }
+    return Trick(
+        cards={0: six_of_clubs, 1: nine_of_clubs},
+        lead_player=0,
+        winner=None,
+    )
 
 
 @pytest.fixture
 def trick_of_six_nine_and_king_of_clubs(
     six_of_clubs, nine_of_clubs, king_of_clubs
 ) -> game.Trick:
-    return {
-        "cards": {0: six_of_clubs, 1: nine_of_clubs, 2: king_of_clubs},
-        "lead_player": 0,
-        "winner": None,
-    }
+    return Trick(
+        cards={0: six_of_clubs, 1: nine_of_clubs, 2: king_of_clubs},
+        lead_player=0,
+        winner=None,
+    )
 
 
 @pytest.fixture
 def trick_of_three_cards(seven_of_hearts, six_of_spades, six_of_hearts) -> game.Trick:
-    return {
-        "cards": {0: seven_of_hearts, 1: six_of_spades, 2: six_of_hearts},
-        "lead_player": 0,
-        "winner": None,
-    }
+    return Trick(
+        cards={0: seven_of_hearts, 1: six_of_spades, 2: six_of_hearts},
+        lead_player=0,
+        winner=None,
+    )
 
 
 @pytest.fixture
@@ -346,7 +346,7 @@ def game_state_with_six_nine_and_king_of_clubs(
 @pytest.fixture
 def game_state_after_one_card(game_state_after_dealing, ace_of_spades):
     state = game_state_after_dealing.copy_state()
-    state.current_trick["cards"][state.next_to_play] = ace_of_spades
+    state.current_trick.cards[state.next_to_play] = ace_of_spades
     state.PLAYERS[state.next_to_play].hand.remove(ace_of_spades)
     state.next_to_play = 1
     return state

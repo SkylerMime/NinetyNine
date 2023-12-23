@@ -1,4 +1,3 @@
-import pytest
 import builtins
 import random
 from ninety_nine import human_ai_main_game as main

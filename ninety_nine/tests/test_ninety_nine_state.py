@@ -1,6 +1,7 @@
 import pytest
 from ninety_nine import ninety_nine_state as game
 from ninety_nine.constants import Suit, GameStage
+from ninety_nine.ninety_nine_state import Trick
 
 
 class TestPLayer:
@@ -52,8 +53,8 @@ class TestGameState:
     ):
         original_state = game_state_after_dealing
         new_state = game_state_after_dealing.copy_state()
-        new_state.current_trick["cards"][0] = ace_of_spades
-        assert len(original_state.current_trick["cards"]) == 0
+        new_state.current_trick.cards[0] = ace_of_spades
+        assert len(original_state.current_trick.cards) == 0
 
     def test_copy_state_leaves_original_lead_unchanged(self, game_state_after_dealing):
         original_state = game_state_after_dealing
@@ -192,14 +193,15 @@ class TestFunctions:
     def test_get_trick_winner_needs_only_the_trick(
         self, ace_of_spades, ten_of_hearts, seven_of_hearts
     ):
-        trick = {
-            "cards": {
+        trick = Trick(
+            {
                 0: ace_of_spades,
                 1: ten_of_hearts,
                 2: seven_of_hearts,
             },
-            "lead_player": 0,
-        }
+            0,
+            None,
+        )
         assert game.get_trick_winner(trick, Suit.CLUBS) == 0
 
     def test_get_some_cards(self, ranks_subset, suits_subset, cards_subset):

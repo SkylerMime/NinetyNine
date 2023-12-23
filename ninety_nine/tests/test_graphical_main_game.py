@@ -6,7 +6,7 @@ import pygame
 import pytest
 from ninety_nine import graphical_main_game as graphics
 from ninety_nine import ninety_nine_state as game
-from ninety_nine.ninety_nine_state import Card
+from ninety_nine.ninety_nine_state import Card, Trick
 from ninety_nine.constants import (
     Rank,
     Suit,
@@ -147,11 +147,11 @@ def game_state_before_end(request):
     game_state.PLAYERS[0].hand = [Card(Rank.SEVEN, Suit.HEARTS)]
     game_state.PLAYERS[1].hand = [Card(Rank.SIX, Suit.HEARTS)]
     game_state.PLAYERS[2].hand = [Card(Rank.NINE, Suit.SPADES)]
-    game_state.current_trick = {
-        "cards": {},
-        "lead_player": request.param,
-        "winner": None,
-    }
+    game_state.current_trick = Trick(
+        {},
+        request.param,
+        None,
+    )
     game_state.TRUMP_SUIT = Suit.CLUBS
     game_state.current_lead = request.param
     game_state.next_to_play = request.param

@@ -71,7 +71,7 @@ def play_one_hand_of_ninety_nine(
             if game.is_full(game_state.current_trick):
                 game_state = game.finish_trick(game_state)
         next_to_play = game_state.next_to_play
-        if len(game_state.current_trick["cards"]) == 0:
+        if len(game_state.current_trick.cards) == 0:
             last_trick = game_state.trick_history[-1]
             trick_winner = game.get_trick_winner(last_trick, game_state.TRUMP_SUIT)
             print_trick_winner(trick_winner)

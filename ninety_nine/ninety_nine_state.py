@@ -1,6 +1,7 @@
+import dataclasses
 import random
 from ninety_nine.constants import Rank, Suit, GameStage
-from typing import TypedDict, Dict
+from typing import Dict
 from dataclasses import dataclass
 
 
@@ -24,7 +25,8 @@ class Card:
         return hash((self.rank, self.suit))
 
 
-class Trick(TypedDict):
+@dataclass
+class Trick:
     cards: dict
     lead_player: int
     winner: int | None
@@ -75,7 +77,7 @@ class GameState:
     def __init__(self, random_seed=None, start_new_game=True):
         self.TRUMP_SUIT = None
         self.current_lead: int = 0
-        self.current_trick: Trick = {"cards": {}, "lead_player": 0, "winner": None}
+        self.current_trick: Trick = Trick({}, 0, None)
         self.PLAYERS: Dict[int, Player] = {}
         self.trick_history = []
         self.next_to_play: int = 0
@@ -102,8 +104,8 @@ class GameState:
         new_state = GameState(start_new_game=False)
         new_state.TRUMP_SUIT = self.TRUMP_SUIT
         new_state.current_lead = self.current_lead
-        new_state.current_trick = self.current_trick.copy()
-        new_state.current_trick["cards"] = self.current_trick["cards"].copy()
+        new_state.current_trick = dataclasses.replace(self.current_trick)
+        new_state.current_trick.cards = self.current_trick.cards.copy()
         for player_num in range(len(self.PLAYERS)):
             new_state.PLAYERS[player_num] = self.PLAYERS[player_num].copy()
         new_state.trick_history = self.trick_history.copy()
@@ -154,7 +156,7 @@ def get_all_cards(suits: set = Suit, ranks: set = Rank):
 
 def is_full(trick: Trick):
     for playerNum in (0, 1, 2):
-        if playerNum not in trick["cards"].keys():
+        if playerNum not in trick.cards.keys():
             return False
     else:
         return True
@@ -171,7 +173,7 @@ def get_legal_card_plays(game_state: GameState, player_num: int | None):
     if game_state.current_lead == player_num:
         return current_player.hand
 
-    led_card: Card = game_state.current_trick["cards"][game_state.current_lead]
+    led_card: Card = game_state.current_trick.cards[game_state.current_lead]
     led_suit = led_card.suit
 
     cards_in_led_suit = set()
@@ -188,9 +190,9 @@ def get_legal_card_plays(game_state: GameState, player_num: int | None):
         return current_player.hand
 
 
-def get_trick_winner(trick: dict, trump_suit: Suit):
-    lead_player_num = trick["lead_player"]
-    trick_cards = trick["cards"]
+def get_trick_winner(trick: Trick, trump_suit: Suit):
+    lead_player_num = trick.lead_player
+    trick_cards = trick.cards
     highest_card_player = lead_player_num
     highest_lead_rank = trick_cards[highest_card_player].rank
     highest_trump_rank: Rank = Rank.SIX
@@ -226,7 +228,7 @@ def make_card_play(game_state: GameState, player: int, card: Card):
 
     current_player: Player = next_state.PLAYERS[player]
     current_player.play_card(card)
-    next_state.current_trick["cards"][player] = card
+    next_state.current_trick.cards[player] = card
 
     if is_full(next_state.current_trick):
         next_state.next_to_play = None
@@ -244,11 +246,11 @@ def finish_trick(game_state: GameState):
         raise KeyError("Some players still need to play")
 
     trick_winner = next_state.get_current_trick_winner()
-    next_state.current_trick["winner"] = trick_winner
+    next_state.current_trick.winner = trick_winner
     next_state.trick_history.append(next_state.current_trick)
     next_state.PLAYERS[trick_winner].tricks_won += 1
 
-    next_state.current_trick = {"cards": {}}
+    next_state.current_trick = Trick(cards={}, lead_player=None, winner=None)
 
     if game_is_over(next_state):
         next_state.current_lead = None
@@ -257,11 +259,7 @@ def finish_trick(game_state: GameState):
         next_state.current_lead = trick_winner
         next_state.next_to_play = trick_winner
 
-    next_state.current_trick = {
-        "lead_player": next_state.current_lead,
-        "cards": {},
-        "winner": None,
-    }
+    next_state.current_trick.lead_player = next_state.current_lead
 
     return next_state
 
@@ -274,7 +272,7 @@ def bid_value(bid: set | list):
 
 
 def game_is_over(game_state: GameState):
-    if len(game_state.current_trick["cards"]) > 0:
+    if len(game_state.current_trick.cards) > 0:
         return False
     for player in game_state.PLAYERS.values():
         if len(player.hand) > 0:
@@ -285,7 +283,7 @@ def game_is_over(game_state: GameState):
 def get_scores(final_state: GameState):
     if not game_is_over(final_state):
         raise KeyError("all cards should be played")
-    if len(final_state.current_trick["cards"]) > 0:
+    if len(final_state.current_trick.cards) > 0:
         raise KeyError("current trick should be finalized")
 
     player_num_range = range(len(final_state.PLAYERS))

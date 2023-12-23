@@ -446,7 +446,7 @@ def draw_trick(
 ):
     if trick_positions is None:
         trick_positions = TRICK_POSITIONS
-    cards: dict = trick["cards"]
+    cards: dict = trick.cards
     for player, card in cards.items():
         card_image = images_dict[card.suit.name.lower()][card.rank.name.lower()]
         screen.blit(card_image, trick_positions[player])
