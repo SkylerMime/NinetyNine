@@ -147,11 +147,7 @@ def get_three_shuffled_hands(cards_to_deal: list[Card], random_seed=None):
 
 
 def get_all_cards(suits: set = Suit, ranks: set = Rank):
-    all_cards = set()
-    for suit in suits:
-        for rank in ranks:
-            all_cards.add(Card(rank, suit))
-    return all_cards
+    return {Card(rank, suit) for rank in ranks for suit in suits}
 
 
 def is_full(trick: Trick):
