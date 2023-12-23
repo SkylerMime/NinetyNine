@@ -286,11 +286,6 @@ def get_scores(final_state: GameState):
     if len(final_state.current_trick.cards) > 0:
         raise KeyError("current trick should be finalized")
 
-    scores = {
-        player_num: player.tricks_won
-        for player_num, player in final_state.PLAYERS.items()
-    }
-
     players_making_bid = [
         player
         for player in final_state.PLAYERS.values()
@@ -304,8 +299,10 @@ def get_scores(final_state: GameState):
         bid_bonus = 20
     elif len(players_making_bid) == 3:
         bid_bonus = 10
-    for player_num, player in final_state.PLAYERS.items():
-        if player in players_making_bid:
-            scores[player_num] += bid_bonus
+
+    scores = {
+        player_num: player.tricks_won + bid_bonus * (player in players_making_bid)
+        for player_num, player in final_state.PLAYERS.items()
+    }
 
     return scores
