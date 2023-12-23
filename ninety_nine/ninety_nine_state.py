@@ -176,12 +176,8 @@ def get_legal_card_plays(game_state: GameState, player_num: int | None):
     led_card: Card = game_state.current_trick.cards[game_state.current_lead]
     led_suit = led_card.suit
 
-    cards_in_led_suit = set()
-
     # we must follow suit if possible
-    for card in current_player.hand:
-        if card.suit == led_suit:
-            cards_in_led_suit.add(card)
+    cards_in_led_suit = {card for card in current_player.hand if card.suit == led_suit}
 
     if len(cards_in_led_suit) > 0:
         return cards_in_led_suit
