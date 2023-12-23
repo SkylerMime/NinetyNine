@@ -89,35 +89,26 @@ class TestFunctions:
         )
         assert new_state == game_state_after_one_card
 
+    @pytest.mark.parametrize(
+        "game_state,new_card,expected_lead",
+        [
+            ("game_state_with_two_card_trick", "six_of_hearts", 0),
+            ("game_state_with_six_club_and_nine_club", "king_of_clubs", 2),
+        ],
+    )
     def test_play_card_to_finish_trick_sets_new_lead(
-        self, game_state_with_two_card_trick, six_of_hearts
+        self, game_state, new_card, expected_lead, request
     ):
+        game_state = request.getfixturevalue(game_state)
+        new_card = request.getfixturevalue(new_card)
         player_to_move = 2
-        game_state_with_two_card_trick.current_lead = 0
-        game_state_with_two_card_trick.PLAYERS[player_to_move].hand.add(six_of_hearts)
-        game_state_with_two_card_trick.next_to_play = player_to_move
-        finish_trick_state = game.make_card_play(
-            game_state_with_two_card_trick, player_to_move, six_of_hearts
-        )
+        game_state.current_lead = 0
+        game_state.PLAYERS[player_to_move].hand.add(new_card)
+        game_state.next_to_play = player_to_move
+        finish_trick_state = game.make_card_play(game_state, player_to_move, new_card)
         finish_trick_state = game.finish_trick(finish_trick_state)
-        assert finish_trick_state.current_lead == 0
-        assert finish_trick_state.next_to_play == 0
-
-    def test_play_card_player_two_wins_sets_two_as_lead(
-        self, game_state_with_six_club_and_nine_club, king_of_clubs
-    ):
-        player_to_move = 2
-        game_state_with_six_club_and_nine_club.current_lead = 0
-        game_state_with_six_club_and_nine_club.PLAYERS[player_to_move].hand.add(
-            king_of_clubs
-        )
-        game_state_with_six_club_and_nine_club.next_to_play = player_to_move
-        finish_trick_state = game.make_card_play(
-            game_state_with_six_club_and_nine_club, player_to_move, king_of_clubs
-        )
-        finish_trick_state = game.finish_trick(finish_trick_state)
-        assert finish_trick_state.current_lead == 2
-        assert finish_trick_state.next_to_play == 2
+        assert finish_trick_state.current_lead == expected_lead
+        assert finish_trick_state.next_to_play == expected_lead
 
     def test_play_card_to_finish_trick_increments_wins(
         self, game_state_with_two_card_trick, six_of_hearts

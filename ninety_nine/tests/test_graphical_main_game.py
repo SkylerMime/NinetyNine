@@ -22,17 +22,17 @@ from ninety_nine.graphical_main_game import (
 )
 
 
-def test_filename_from_ace_of_spades(ace_of_spades):
+@pytest.mark.parametrize(
+    "card,filename",
+    [
+        (Card(Rank.ACE, Suit.SPADES), "spades_ace.png"),
+        (Card(Rank.ACE, Suit.CLUBS), "clubs_ace.png"),
+    ],
+)
+def test_filename_from_ace_of_spades(card, filename):
     assert (
-        graphics.get_image_filename_from_card(ace_of_spades)
-        == f"{IMAGES_DIRECTORY_PATH}/spades_ace.png"
-    )
-
-
-def test_filename_from_ace_of_clubs():
-    assert (
-        graphics.get_image_filename_from_card(Card(Rank.ACE, Suit.CLUBS))
-        == f"{IMAGES_DIRECTORY_PATH}/clubs_ace.png"
+        graphics.get_image_filename_from_card(card)
+        == f"{IMAGES_DIRECTORY_PATH}/{filename}"
     )
 
 
@@ -140,7 +140,7 @@ def mock_pygame(monkeypatch):
     monkeypatch.setattr(TextView, "render_message", mock_render)
 
 
-@pytest.fixture(params=[1, 2], ids=["Player 1 leads", "Player 2 leads"])
+@pytest.fixture
 def game_state_before_end(request):
     game_state = game.GameState()
     game_state.stage = game.GameStage.PLAYING
@@ -156,6 +156,16 @@ def game_state_before_end(request):
     game_state.current_lead = request.param
     game_state.next_to_play = request.param
     return game_state
+
+
+@pytest.fixture
+def final_scores(request):
+    return request.param
+
+
+@pytest.fixture
+def turn_order(request):
+    return request.param
 
 
 @dataclass
@@ -189,8 +199,15 @@ class MockLastTrickEvent:
         self.click_pos = click_pos
 
 
+@pytest.mark.parametrize(
+    "game_state_before_end,final_scores,turn_order",
+    [pytest.param(1, {0: 1, 1: 20, 2: 20}, [1, 2, 0, "continue"], id="player_1_leads"),
+     pytest.param(2, {0: 20, 1: 20, 2: 1}, [2, 0, 1, "continue"], id="player_2_leads"),
+     pytest.param(0, {0: 1, 1: 20, 2: 20}, [0, 1, 2, "continue"], id="human_player_leads")],
+    indirect=True,
+)
 def test_playing_loop_last_trick_ends_game(
-    monkeypatch, mock_pygame, game_state_before_end
+    monkeypatch, mock_pygame, game_state_before_end, final_scores, turn_order
 ):
     human_hand = game_state_before_end.PLAYERS[0].hand
     mock_images_dict = {
@@ -202,10 +219,7 @@ def test_playing_loop_last_trick_ends_game(
     card_area = clickable_human_hand[0].clickable_area
     click_pos = card_area.centerx, card_area.centery
     event = MockLastTrickEvent(click_pos)
-    final_scores = {0: 1, 1: 20, 2: 20}
-    if game_state_before_end.current_lead == 2:
-        event.player_turn_order = [2, 0, 1, "continue"]
-        final_scores = {0: 20, 1: 20, 2: 1}
+    event.player_turn_order = turn_order
     monkeypatch.setattr(pygame, "event", event)
     mock_screen = MockScreen()
     mock_time = MockTimeAndClock()
