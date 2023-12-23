@@ -17,15 +17,14 @@ def main(random_seed=None):
     print_welcome_message()
 
     game_state = game.GameState(random_seed)
-    num_players = len(game_state.PLAYERS)
 
     print(f"The trump suit is: {game_state.TRUMP_SUIT.name.capitalize()}")
 
-    for player_num in range(num_players):
+    for player_num, player in game_state.PLAYERS.items():
         if player_types[player_num] == PlayerTypes.HUMAN:
-            get_human_bid(game_state.PLAYERS[player_num])
+            get_human_bid(player)
         elif player_types[player_num] == PlayerTypes.RANDOM:
-            get_random_bid(game_state.PLAYERS[player_num])
+            get_random_bid(player)
 
     game_state.stage = game.GameStage.PLAYING
 
