@@ -106,7 +106,9 @@ class GameState:
         new_state.current_lead = self.current_lead
         new_state.current_trick = dataclasses.replace(self.current_trick)
         new_state.current_trick.cards = self.current_trick.cards.copy()
-        new_state.PLAYERS = {player_num: player.copy() for player_num, player in self.PLAYERS.items()}
+        new_state.PLAYERS = {
+            player_num: player.copy() for player_num, player in self.PLAYERS.items()
+        }
         new_state.trick_history = self.trick_history.copy()
         new_state.next_to_play = self.next_to_play
         new_state.stage = self.stage
@@ -177,6 +179,7 @@ def get_legal_card_plays(game_state: GameState, player_num: int | None):
     if len(cards_in_led_suit) > 0:
         return cards_in_led_suit
 
+    # otherwise we may play any card
     else:
         return current_player.hand
 
