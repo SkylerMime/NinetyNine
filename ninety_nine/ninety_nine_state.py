@@ -106,8 +106,7 @@ class GameState:
         new_state.current_lead = self.current_lead
         new_state.current_trick = dataclasses.replace(self.current_trick)
         new_state.current_trick.cards = self.current_trick.cards.copy()
-        for player_num in range(len(self.PLAYERS)):
-            new_state.PLAYERS[player_num] = self.PLAYERS[player_num].copy()
+        new_state.PLAYERS = {player_num: player.copy() for player_num, player in self.PLAYERS.items()}
         new_state.trick_history = self.trick_history.copy()
         new_state.next_to_play = self.next_to_play
         new_state.stage = self.stage
