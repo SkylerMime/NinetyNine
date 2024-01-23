@@ -1,7 +1,6 @@
 import pytest
 
-from abstract_classes import monte_carlo_tree_search as mcst
-from connect_four import constants
+from connect_four import constants, monte_carlo_tree_search as mcst
 
 
 @pytest.fixture

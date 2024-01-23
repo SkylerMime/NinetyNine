@@ -4,6 +4,8 @@ from ninety_nine.constants import Rank, Suit, GameStage
 from typing import Dict
 from dataclasses import dataclass
 
+type Scores = dict[int, int]
+
 
 @dataclass
 class Card:
@@ -161,7 +163,7 @@ def is_full(trick: Trick):
 
 def get_legal_card_plays(game_state: GameState, player_num: int | None):
     if player_num not in game_state.PLAYERS.keys():
-        raise KeyError("player must be 0, 1, or 2")
+        raise KeyError(f"player is {player_num}, but it must be 0, 1, or 2")
     if game_state.next_to_play != player_num:
         raise KeyError("it is not this player's turn")
 
@@ -211,12 +213,12 @@ def get_trick_winner(trick: Trick, trump_suit: Suit):
 
 
 def make_card_play(game_state: GameState, player: int, card: Card):
-    if player not in game_state.PLAYERS.keys():
-        raise KeyError("player must be 0, 1, or 2")
-    if game_state.next_to_play != player:
-        raise KeyError("it is not this player's turn")
     if is_full(game_state.current_trick):
         raise ValueError("this trick is full")
+    if player not in game_state.PLAYERS.keys():
+        raise KeyError(f"player is {player}, but it must be 0, 1, or 2")
+    if game_state.next_to_play != player:
+        raise KeyError("it is not this player's turn")
 
     next_state = game_state.copy_state()
 
@@ -274,7 +276,7 @@ def game_is_over(game_state: GameState):
     return True
 
 
-def get_scores(final_state: GameState):
+def get_scores(final_state: GameState) -> Scores:
     if not game_is_over(final_state):
         raise KeyError("all cards should be played")
     if len(final_state.current_trick.cards) > 0:
@@ -294,7 +296,7 @@ def get_scores(final_state: GameState):
     elif len(players_making_bid) == 3:
         bid_bonus = 10
 
-    scores = {
+    scores: Scores = {
         player_num: player.tricks_won + bid_bonus * (player in players_making_bid)
         for player_num, player in final_state.PLAYERS.items()
     }

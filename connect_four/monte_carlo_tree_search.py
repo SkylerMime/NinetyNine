@@ -68,7 +68,7 @@ class MCTS:
         self.node_count = 0
         self.num_rollouts = 0
 
-    def select_node(self) -> tuple:
+    def select_node(self) -> tuple[Node, ConnectState]:
         node = self.root
         state = deepcopy(self.root_state)
 

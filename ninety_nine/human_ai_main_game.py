@@ -9,6 +9,7 @@ from ninety_nine.constants import (
     NUM_TRICKS,
     NUM_PLAYERS,
 )
+from ninety_nine.monte_carlo_tree_search import NinetyNineMCST
 
 
 def main(random_seed=None):
@@ -47,29 +48,37 @@ def play_one_hand_of_ninety_nine(
 ):
     next_to_play = 0
 
+    if PlayerTypes.MONTE_CARLO_AI in player_types.values():
+        mcst = NinetyNineMCST(game_state)
+    else:
+        mcst = None
+
     for trick in range(num_tricks * NUM_PLAYERS):
+        card_to_play = None
         if player_types[next_to_play] == PlayerTypes.HUMAN:
             print("Your hand:")
             print_cards(game_state.PLAYERS[0].hand)
             print()
             card_to_play = get_human_card_play(next_to_play, game_state)
             print("You chose: ")
-            print_card(card_to_play)
-            print()
-            game_state = game.make_card_play(game_state, next_to_play, card_to_play)
-            if game.is_full(game_state.current_trick):
-                game_state = game.finish_trick(game_state)
         elif player_types[next_to_play] == PlayerTypes.RANDOM:
             print(f"Player {next_to_play}'s move is: ")
             card_to_play = random.choice(
                 list(game.get_legal_card_plays(game_state, next_to_play))
             )
-            print_card(card_to_play)
-            print()
-            game_state = game.make_card_play(game_state, next_to_play, card_to_play)
-            if game.is_full(game_state.current_trick):
-                game_state = game.finish_trick(game_state)
+        elif player_types[next_to_play] == PlayerTypes.MONTE_CARLO_AI:
+            print("AI is thinking")
+            mcst.search(1)
+            print(f"Player {next_to_play}'s move is: ")
+            card_to_play = mcst.best_move()
+        print_card(card_to_play)
+        print()
+        game_state = game.make_card_play(game_state, next_to_play, card_to_play)
+        if game.is_full(game_state.current_trick):
+            game_state = game.finish_trick(game_state)
         next_to_play = game_state.next_to_play
+        if mcst:
+            mcst.play_card(card_to_play)
         if len(game_state.current_trick.cards) == 0:
             last_trick = game_state.trick_history[-1]
             trick_winner = game.get_trick_winner(last_trick, game_state.TRUMP_SUIT)

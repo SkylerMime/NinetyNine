@@ -9,8 +9,9 @@ NUM_PLAYERS = 3
 class PlayerTypes(Enum):
     HUMAN = 0
     RANDOM = 1
-    TRICK_COMPLETE = 2
-    WAITING_FOR_COMPUTER = 3
+    MONTE_CARLO_AI = 2
+    TRICK_COMPLETE = 3
+    WAITING_FOR_COMPUTER = 4
 
 
 PLAYER_TYPES = {
