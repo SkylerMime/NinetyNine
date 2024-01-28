@@ -253,7 +253,7 @@ def do_bidding_loop(
                 clicked_card = get_card_from_click(
                     event.pos, clickable_hand + clickable_bid
                 )
-                if clicked_card in clickable_hand:
+                if clicked_card in clickable_hand and not continue_button.visible:
                     human_player.hand.remove(clicked_card.get_card())
                     human_player.bid.add(clicked_card.get_card())
                 if clicked_card in clickable_bid:
