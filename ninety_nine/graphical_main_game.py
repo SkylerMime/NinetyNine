@@ -14,12 +14,21 @@ from ninety_nine.constants import (
     NUM_TRICKS,
     NUM_PLAYERS,
 )
+from ninety_nine.monte_carlo_tree_search import NinetyNineMCST
 
 IMAGES_DIRECTORY_PATH = (
     "/Users/Skyler/Coding/PythonPrograms/NinetyNine/ninety_nine/card_images"
 )
 
 NUM_CARDS = NUM_CARDS_IN_BID + NUM_TRICKS
+
+AI_PLAYER_COMBINATION = {
+    0: PlayerTypes.HUMAN,
+    1: PlayerTypes.MONTE_CARLO_AI,
+    2: PlayerTypes.RANDOM,
+    None: PlayerTypes.TRICK_COMPLETE,
+    -1: PlayerTypes.WAITING_FOR_COMPUTER,
+}
 
 HUMAN_PLAYER_NUM = 0
 
@@ -161,8 +170,10 @@ def main():
     clock = pygame.time.Clock()
 
     while True:
-        player_types = PLAYER_TYPES
+        # player_types = PLAYER_TYPES  # TODO: Control based on player input
+        player_types = AI_PLAYER_COMBINATION
         # display_welcome_message()
+
         images_dict = make_images_dict(game.get_all_cards())
 
         game_state = game.GameState()
@@ -203,7 +214,7 @@ def main():
         clickable_bid = get_clickable_cards(list(human_player.bid), images_dict)
 
         for player_num in range(num_players):
-            if player_types[player_num] == PlayerTypes.RANDOM:
+            if player_types[player_num] in {PlayerTypes.RANDOM, PlayerTypes.MONTE_CARLO_AI}:
                 game_display.get_random_bid(game_state.PLAYERS[player_num])
 
         game_state, new_hand = do_bidding_loop(
@@ -217,6 +228,11 @@ def main():
             bid_message,
         )
 
+        if PlayerTypes.MONTE_CARLO_AI in player_types.values():
+            mcst = NinetyNineMCST(game_state)
+        else:
+            mcst = None
+
         game_state = do_playing_loop(
             game_state,
             new_hand,
@@ -226,6 +242,8 @@ def main():
             trump_message,
             bid_message,
             tricks_taken_message,
+            player_types=AI_PLAYER_COMBINATION,
+            mcst=mcst,
         )
 
         display_final_scores(screen, game_state, clock)
@@ -308,6 +326,7 @@ def do_playing_loop(
     tricks_taken_message=None,
     player_types=PLAYER_TYPES,
     human_player_num=HUMAN_PLAYER_NUM,
+    mcst=NinetyNineMCST(),
 ):
     continue_button = Button()
     continue_button.render_message("Next trick")
@@ -359,6 +378,18 @@ def do_playing_loop(
             card_to_play = random.choice(
                 list(game.get_legal_card_plays(game_state, game_state.next_to_play))
             )
+            game_state = game.make_card_play(
+                game_state, game_state.next_to_play, card_to_play
+            )
+            time_of_next_play = pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
+
+        elif (
+            player_types[game_state.next_to_play] == PlayerTypes.MONTE_CARLO_AI
+            and pygame.time.get_ticks() > time_of_next_play
+        ):
+            mcst.search(1)
+            card_to_play = mcst.best_move()
+            mcst.play_card(card_to_play)
             game_state = game.make_card_play(
                 game_state, game_state.next_to_play, card_to_play
             )
