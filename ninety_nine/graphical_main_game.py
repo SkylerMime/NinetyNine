@@ -326,7 +326,7 @@ def do_playing_loop(
     tricks_taken_message=None,
     player_types=PLAYER_TYPES,
     human_player_num=HUMAN_PLAYER_NUM,
-    mcst=NinetyNineMCST(),
+    mcst=None,
 ):
     continue_button = Button()
     continue_button.render_message("Next trick")
@@ -346,16 +346,20 @@ def do_playing_loop(
                 pygame.quit()
                 raise SystemExit
             if event.type == pygame.MOUSEBUTTONUP:
+                card_to_play = None
                 clicked_card = get_card_from_click(event.pos, clickable_hand)
+                if clicked_card:
+                    card_to_play = clicked_card.get_card()
                 if (
                     game_state.next_to_play == HUMAN_PLAYER_NUM
-                    and clicked_card
-                    and clicked_card.get_card()
+                    and card_to_play
                     in game.get_legal_card_plays(game_state, HUMAN_PLAYER_NUM)
                 ):
                     game_state = game.make_card_play(
-                        game_state, HUMAN_PLAYER_NUM, clicked_card.get_card()
+                        game_state, HUMAN_PLAYER_NUM, card_to_play
                     )
+                    if mcst:
+                        mcst.play_card(card_to_play)
                     sorted_hand = game_display.get_sorted_cards(
                         game_state.PLAYERS[human_player_num].hand
                     )
@@ -375,12 +379,12 @@ def do_playing_loop(
             player_types[game_state.next_to_play] == PlayerTypes.RANDOM
             and pygame.time.get_ticks() > time_of_next_play
         ):
-            card_to_play = random.choice(
-                list(game.get_legal_card_plays(game_state, game_state.next_to_play))
-            )
+            card_to_play = get_random_card_to_play(game_state)
             game_state = game.make_card_play(
                 game_state, game_state.next_to_play, card_to_play
             )
+            if mcst:
+                mcst.play_card(card_to_play)
             time_of_next_play = pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
 
         elif (
@@ -425,6 +429,12 @@ def do_playing_loop(
         clock.tick(60)
 
     return game_state
+
+
+def get_random_card_to_play(game_state):
+    return random.choice(
+        list(game.get_legal_card_plays(game_state, game_state.next_to_play))
+    )
 
 
 def display_final_scores(screen, final_state, clock):

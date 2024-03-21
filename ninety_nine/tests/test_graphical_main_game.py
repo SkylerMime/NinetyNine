@@ -6,6 +6,7 @@ import pygame
 import pytest
 from ninety_nine import graphical_main_game as graphics
 from ninety_nine import ninety_nine_state as game
+from ninety_nine.monte_carlo_tree_search import NinetyNineMCST
 from ninety_nine.ninety_nine_state import Card, Trick
 from ninety_nine.constants import (
     Rank,
@@ -19,6 +20,7 @@ from ninety_nine.graphical_main_game import (
     HAND_TOP,
     SPACE_BETWEEN_CARDS,
     Button,
+    AI_PLAYER_COMBINATION,
 )
 
 
@@ -201,9 +203,17 @@ class MockLastTrickEvent:
 
 @pytest.mark.parametrize(
     "game_state_before_end,final_scores,turn_order",
-    [pytest.param(1, {0: 1, 1: 20, 2: 20}, [1, 2, 0, "continue"], id="player_1_leads"),
-     pytest.param(2, {0: 20, 1: 20, 2: 1}, [2, 0, 1, "continue"], id="player_2_leads"),
-     pytest.param(0, {0: 1, 1: 20, 2: 20}, [0, 1, 2, "continue"], id="human_player_leads")],
+    [
+        pytest.param(
+            1, {0: 1, 1: 20, 2: 20}, [1, 2, 0, "continue"], id="player_1_leads"
+        ),
+        pytest.param(
+            2, {0: 20, 1: 20, 2: 1}, [2, 0, 1, "continue"], id="player_2_leads"
+        ),
+        pytest.param(
+            0, {0: 1, 1: 20, 2: 20}, [0, 1, 2, "continue"], id="human_player_leads"
+        ),
+    ],
     indirect=True,
 )
 def test_playing_loop_last_trick_ends_game(
@@ -310,6 +320,11 @@ def all_random_plays(all_tricks_plays):
     return [x[1] for x in all_tricks_plays if x[0] in (1, 2)]
 
 
+@pytest.fixture
+def player_two_random_plays(all_tricks_plays):
+    return [x[1] for x in all_tricks_plays if x[0] == 2]
+
+
 def test_human_list_filtering(all_human_plays):
     assert len(all_human_plays) == 18
 
@@ -370,6 +385,13 @@ def random_card_from_choice_mock(all_random_plays):
 
 
 @pytest.fixture
+def player_two_random_plays_mock(player_two_random_plays):
+    mock = Mock()
+    mock.side_effect = player_two_random_plays
+    return mock
+
+
+@pytest.fixture
 def all_cards_event_mock(all_events):
     mock = Mock()
     mock.side_effect = all_events
@@ -420,6 +442,43 @@ def test_playing_loop_all_cards_get_played(
         mock_time,
         None,
         None,
+    )
+
+    assert len(final_state.PLAYERS[1].hand) == 0
+
+
+def test_playing_loop_with_mcst(
+    monkeypatch,
+    mock_pygame,
+    images_dict,
+    game_state_after_dealing_spades_trump,
+    all_cards_event_mock,
+    human_card_from_click_mock,
+    player_two_random_plays_mock,
+    clickable_hand,
+):
+    monkeypatch.setattr(graphics, "get_random_card_to_play", player_two_random_plays_mock)
+    monkeypatch.setattr(graphics, "get_card_from_click", human_card_from_click_mock)
+    monkeypatch.setattr(pygame.event, "get", all_cards_event_mock)
+    mock_screen = MockScreen()
+    mock_time = MockTimeAndClock()
+    monkeypatch.setattr(pygame, "time", mock_time)
+    # We set the milliseconds between plays to a negative value so
+    # `get_ticks() > time_of_next_play` will always evaluate True
+    monkeypatch.setattr(graphics, "MILLISECONDS_BETWEEN_PLAYS", -1)
+
+    assert game_state_after_dealing_spades_trump.next_to_play == 0
+
+    final_state = graphics.do_playing_loop(
+        game_state_after_dealing_spades_trump,
+        clickable_hand,
+        images_dict,
+        mock_screen,
+        mock_time,
+        None,
+        None,
+        player_types=AI_PLAYER_COMBINATION,
+        mcst=NinetyNineMCST(game_state_after_dealing_spades_trump)
     )
 
     assert len(final_state.PLAYERS[1].hand) == 0
