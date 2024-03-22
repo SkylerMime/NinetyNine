@@ -11,6 +11,7 @@ from ninety_nine.ninety_nine_state import Card, Trick
 from ninety_nine.constants import (
     Rank,
     Suit,
+    PlayerTypes,
 )
 from ninety_nine.graphical_main_game import (
     ClickableCard,
@@ -320,11 +321,6 @@ def all_random_plays(all_tricks_plays):
     return [x[1] for x in all_tricks_plays if x[0] in (1, 2)]
 
 
-@pytest.fixture
-def player_two_random_plays(all_tricks_plays):
-    return [x[1] for x in all_tricks_plays if x[0] == 2]
-
-
 def test_human_list_filtering(all_human_plays):
     assert len(all_human_plays) == 18
 
@@ -333,8 +329,19 @@ def test_random_list_filtering(all_random_plays):
     assert len(all_random_plays) == 18
 
 
+@pytest.fixture()
+def click_continue_event():
+    click_continue_event = MockOneEvent()
+    click_continue_event.type = pygame.MOUSEBUTTONUP
+    click_continue_event.pos = (
+        graphics.BUTTON_LEFT + 2,
+        graphics.BUTTON_TOP + 2,
+    )
+    return click_continue_event
+
+
 @pytest.fixture
-def all_events(all_tricks_plays):
+def all_events(all_tricks_plays, click_continue_event):
     all_events = []
     for play in all_tricks_plays:
         if play[0] == 0:
@@ -345,12 +352,6 @@ def all_events(all_tricks_plays):
         elif play[0] in (1, 2):
             all_events.append([])
         if play[0] == "continue":
-            click_continue_event = MockOneEvent()
-            click_continue_event.type = pygame.MOUSEBUTTONUP
-            click_continue_event.pos = (
-                graphics.BUTTON_LEFT + 2,
-                graphics.BUTTON_TOP + 2,
-            )
             all_events.append([click_continue_event])
     return all_events
 
@@ -381,13 +382,6 @@ def human_card_from_click_mock(all_human_plays):
 def random_card_from_choice_mock(all_random_plays):
     mock = Mock()
     mock.side_effect = all_random_plays
-    return mock
-
-
-@pytest.fixture
-def player_two_random_plays_mock(player_two_random_plays):
-    mock = Mock()
-    mock.side_effect = player_two_random_plays
     return mock
 
 
@@ -447,19 +441,30 @@ def test_playing_loop_all_cards_get_played(
     assert len(final_state.PLAYERS[1].hand) == 0
 
 
-def test_playing_loop_with_mcst(
+@pytest.fixture
+def ai_versus_random_player_combination():
+    AI_PLAYER_COMBINATION[0] = PlayerTypes.RANDOM
+    return AI_PLAYER_COMBINATION
+
+
+@pytest.fixture
+def empty_events_with_continues_mock(click_continue_event):
+    mock = Mock()
+    num_hands = 9
+    mock.side_effect = [[click_continue_event] if i % 4 == 3 else [] for i in range(num_hands*4)]
+    return mock
+
+
+def test_playing_loop_with_mcst_versus_random(
     monkeypatch,
     mock_pygame,
     images_dict,
     game_state_after_dealing_spades_trump,
-    all_cards_event_mock,
-    human_card_from_click_mock,
-    player_two_random_plays_mock,
+    empty_events_with_continues_mock,
+    ai_versus_random_player_combination,
     clickable_hand,
 ):
-    monkeypatch.setattr(graphics, "get_random_card_to_play", player_two_random_plays_mock)
-    monkeypatch.setattr(graphics, "get_card_from_click", human_card_from_click_mock)
-    monkeypatch.setattr(pygame.event, "get", all_cards_event_mock)
+    monkeypatch.setattr(pygame.event, "get", empty_events_with_continues_mock)
     mock_screen = MockScreen()
     mock_time = MockTimeAndClock()
     monkeypatch.setattr(pygame, "time", mock_time)
@@ -477,8 +482,8 @@ def test_playing_loop_with_mcst(
         mock_time,
         None,
         None,
-        player_types=AI_PLAYER_COMBINATION,
-        mcst=NinetyNineMCST(game_state_after_dealing_spades_trump)
+        player_types=ai_versus_random_player_combination,
+        mcst=NinetyNineMCST(game_state_after_dealing_spades_trump),
     )
 
     assert len(final_state.PLAYERS[1].hand) == 0
