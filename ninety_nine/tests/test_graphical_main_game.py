@@ -6,10 +6,12 @@ import pygame
 import pytest
 from ninety_nine import graphical_main_game as graphics
 from ninety_nine import ninety_nine_state as game
+from ninety_nine.monte_carlo_tree_search import NinetyNineMCST
 from ninety_nine.ninety_nine_state import Card, Trick
 from ninety_nine.constants import (
     Rank,
     Suit,
+    PlayerTypes,
 )
 from ninety_nine.graphical_main_game import (
     ClickableCard,
@@ -19,6 +21,7 @@ from ninety_nine.graphical_main_game import (
     HAND_TOP,
     SPACE_BETWEEN_CARDS,
     Button,
+    AI_PLAYER_COMBINATION,
 )
 
 
@@ -201,9 +204,17 @@ class MockLastTrickEvent:
 
 @pytest.mark.parametrize(
     "game_state_before_end,final_scores,turn_order",
-    [pytest.param(1, {0: 1, 1: 20, 2: 20}, [1, 2, 0, "continue"], id="player_1_leads"),
-     pytest.param(2, {0: 20, 1: 20, 2: 1}, [2, 0, 1, "continue"], id="player_2_leads"),
-     pytest.param(0, {0: 1, 1: 20, 2: 20}, [0, 1, 2, "continue"], id="human_player_leads")],
+    [
+        pytest.param(
+            1, {0: 1, 1: 20, 2: 20}, [1, 2, 0, "continue"], id="player_1_leads"
+        ),
+        pytest.param(
+            2, {0: 20, 1: 20, 2: 1}, [2, 0, 1, "continue"], id="player_2_leads"
+        ),
+        pytest.param(
+            0, {0: 1, 1: 20, 2: 20}, [0, 1, 2, "continue"], id="human_player_leads"
+        ),
+    ],
     indirect=True,
 )
 def test_playing_loop_last_trick_ends_game(
@@ -318,8 +329,19 @@ def test_random_list_filtering(all_random_plays):
     assert len(all_random_plays) == 18
 
 
+@pytest.fixture()
+def click_continue_event():
+    click_continue_event = MockOneEvent()
+    click_continue_event.type = pygame.MOUSEBUTTONUP
+    click_continue_event.pos = (
+        graphics.BUTTON_LEFT + 2,
+        graphics.BUTTON_TOP + 2,
+    )
+    return click_continue_event
+
+
 @pytest.fixture
-def all_events(all_tricks_plays):
+def all_events(all_tricks_plays, click_continue_event):
     all_events = []
     for play in all_tricks_plays:
         if play[0] == 0:
@@ -330,12 +352,6 @@ def all_events(all_tricks_plays):
         elif play[0] in (1, 2):
             all_events.append([])
         if play[0] == "continue":
-            click_continue_event = MockOneEvent()
-            click_continue_event.type = pygame.MOUSEBUTTONUP
-            click_continue_event.pos = (
-                graphics.BUTTON_LEFT + 2,
-                graphics.BUTTON_TOP + 2,
-            )
             all_events.append([click_continue_event])
     return all_events
 
@@ -420,6 +436,54 @@ def test_playing_loop_all_cards_get_played(
         mock_time,
         None,
         None,
+    )
+
+    assert len(final_state.PLAYERS[1].hand) == 0
+
+
+@pytest.fixture
+def ai_versus_random_player_combination():
+    AI_PLAYER_COMBINATION[0] = PlayerTypes.RANDOM
+    return AI_PLAYER_COMBINATION
+
+
+@pytest.fixture
+def empty_events_with_continues_mock(click_continue_event):
+    mock = Mock()
+    num_hands = 9
+    mock.side_effect = [[click_continue_event] if i % 4 == 3 else [] for i in range(num_hands*4)]
+    return mock
+
+
+def test_playing_loop_with_mcst_versus_random(
+    monkeypatch,
+    mock_pygame,
+    images_dict,
+    game_state_after_dealing_spades_trump,
+    empty_events_with_continues_mock,
+    ai_versus_random_player_combination,
+    clickable_hand,
+):
+    monkeypatch.setattr(pygame.event, "get", empty_events_with_continues_mock)
+    mock_screen = MockScreen()
+    mock_time = MockTimeAndClock()
+    monkeypatch.setattr(pygame, "time", mock_time)
+    # We set the milliseconds between plays to a negative value so
+    # `get_ticks() > time_of_next_play` will always evaluate True
+    monkeypatch.setattr(graphics, "MILLISECONDS_BETWEEN_PLAYS", -1)
+
+    assert game_state_after_dealing_spades_trump.next_to_play == 0
+
+    final_state = graphics.do_playing_loop(
+        game_state_after_dealing_spades_trump,
+        clickable_hand,
+        images_dict,
+        mock_screen,
+        mock_time,
+        None,
+        None,
+        player_types=ai_versus_random_player_combination,
+        mcst=NinetyNineMCST(game_state_after_dealing_spades_trump),
     )
 
     assert len(final_state.PLAYERS[1].hand) == 0
