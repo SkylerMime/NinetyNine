@@ -170,8 +170,8 @@ def main():
     clock = pygame.time.Clock()
 
     while True:
-        # player_types = PLAYER_TYPES  # TODO: Control based on player input
-        player_types = AI_PLAYER_COMBINATION
+        player_types = PLAYER_TYPES  # TODO: Control based on player input
+        # player_types = AI_PLAYER_COMBINATION
         # display_welcome_message()
 
         images_dict = make_images_dict(game.get_all_cards())
@@ -242,7 +242,7 @@ def main():
             trump_message,
             bid_message,
             tricks_taken_message,
-            player_types=AI_PLAYER_COMBINATION,
+            player_types=player_types,
             mcst=mcst,
         )
 
@@ -607,7 +607,7 @@ def get_image_filename_from_card(card: game.Card):
         case "six":
             image_rank = "6"
     image_suit = str(card.suit.name).lower()
-    return f"{IMAGES_DIRECTORY_PATH}/{image_suit}_{image_rank}.png"
+    return f"{IMAGES_DIRECTORY_PATH}/{image_suit}_{image_rank}.svg"
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import os
+import shutil
 
 # Directory where the files are located
 directory = "card_images"
@@ -35,15 +36,15 @@ for suit in suit_mapping:
         if os.path.isfile(filename):
             # Check if the file has a valid name to be renamed
             rank = os.path.splitext(filename)[0]
-            if rank in rank_mapping and os.path.splitext(filename)[1] == ".png":
+            if rank in rank_mapping and os.path.splitext(filename)[1] == ".svg":
                 # Construct the new filename with suit and rank
-                new_filename = f"{suit_mapping[suit]}_{rank_mapping[rank]}.png"
+                new_filename = f"{suit_mapping[suit]}_{rank_mapping[rank]}.svg"
 
                 # Rename the file
                 os.rename(filename, new_filename)
                 print(f"Renamed: {filename} -> {new_filename}")
-            # Check if the file ends with ".svg" and delete it
-            elif filename.endswith(".svg") or rank not in rank_mapping:
+            # Check if the file ends with ".png" and delete it
+            elif filename.endswith(".png") or rank not in rank_mapping:
                 os.remove(filename)
                 print(f"Deleted: {filename}")
     os.chdir("..")
