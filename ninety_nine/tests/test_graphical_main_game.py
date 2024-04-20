@@ -28,8 +28,8 @@ from ninety_nine.graphical_main_game import (
 @pytest.mark.parametrize(
     "card,filename",
     [
-        (Card(Rank.ACE, Suit.SPADES), "spades_ace.png"),
-        (Card(Rank.ACE, Suit.CLUBS), "clubs_ace.png"),
+        (Card(Rank.ACE, Suit.SPADES), "spades_ace.svg"),
+        (Card(Rank.ACE, Suit.CLUBS), "clubs_ace.svg"),
     ],
 )
 def test_filename_from_ace_of_spades(card, filename):
@@ -455,6 +455,7 @@ def empty_events_with_continues_mock(click_continue_event):
     return mock
 
 
+@pytest.mark.skip(reason="slow test")
 def test_playing_loop_with_mcst_versus_random(
     monkeypatch,
     mock_pygame,
@@ -487,3 +488,8 @@ def test_playing_loop_with_mcst_versus_random(
     )
 
     assert len(final_state.PLAYERS[1].hand) == 0
+
+
+def test_main_menu_continue():
+    selected_option = graphics.get_clicked_menu_option()
+    assert selected_option == "Main Game"

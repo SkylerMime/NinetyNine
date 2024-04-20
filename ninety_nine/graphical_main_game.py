@@ -13,6 +13,7 @@ from ninety_nine.constants import (
     PLAYER_TYPES,
     NUM_TRICKS,
     NUM_PLAYERS,
+    MenuOptions,
 )
 from ninety_nine.monte_carlo_tree_search import NinetyNineMCST
 
@@ -52,6 +53,11 @@ BUTTON_HEIGHT = 90
 BUTTON_TOP = HAND_TOP - BUTTON_HEIGHT - 20
 BUTTON_HORIZONTAL_CENTER = WINDOW_WIDTH // 2
 BUTTON_LEFT = BUTTON_HORIZONTAL_CENTER - BUTTON_WIDTH // 2
+
+SPACE_BETWEEN_MENU_BUTTONS = 20
+NUM_OPTIONS = len(MenuOptions)
+WIDTH_OF_FULL_MENU = (BUTTON_WIDTH + SPACE_BETWEEN_MENU_BUTTONS - 1) * NUM_OPTIONS
+MENU_LEFT_START = BUTTON_HORIZONTAL_CENTER - (WIDTH_OF_FULL_MENU // 2)
 
 TEXTVIEW_WIDTH = 360
 TEXTVIEW_HEIGHT = 90
@@ -129,6 +135,7 @@ class Button(TextView):
         self.text_color = (BUTTON_TEXT_COLOR,)
         self.message = "Confirm Bid"
         self.visible = False
+        self.menu_option: MenuOptions | None = None
 
 
 class ClickableCard(Card):
@@ -170,9 +177,35 @@ def main():
     clock = pygame.time.Clock()
 
     while True:
-        player_types = PLAYER_TYPES  # TODO: Control based on player input
-        # player_types = AI_PLAYER_COMBINATION
-        # display_welcome_message()
+        selected_menu_option = None
+        buttons = []
+        for option_num, menu_option in enumerate(MenuOptions):
+            menu_string = menu_option.value
+            new_button = Button()
+            new_button.rect.left = (
+                MENU_LEFT_START + (BUTTON_WIDTH + SPACE_BETWEEN_MENU_BUTTONS) * option_num
+            )
+            new_button.render_message(menu_string)
+            new_button.menu_option = menu_option
+            buttons.append(new_button)
+
+        while not selected_menu_option:
+            selected_menu_option = get_clicked_menu_option(buttons)
+            # graphics
+            draw_menu(screen, buttons)
+            clock.tick(60)
+
+        player_types = PLAYER_TYPES
+        match selected_menu_option:
+            case MenuOptions.MAIN_GAME:
+                player_types = PLAYER_TYPES
+            case MenuOptions.AI_GAME:
+                player_types = AI_PLAYER_COMBINATION
+            case MenuOptions.QUIT:
+                pygame.quit()
+                raise SystemExit
+            case _:
+                raise SystemExit("Invalid menu option")
 
         images_dict = make_images_dict(game.get_all_cards())
 
@@ -214,7 +247,10 @@ def main():
         clickable_bid = get_clickable_cards(list(human_player.bid), images_dict)
 
         for player_num in range(num_players):
-            if player_types[player_num] in {PlayerTypes.RANDOM, PlayerTypes.MONTE_CARLO_AI}:
+            if player_types[player_num] in {
+                PlayerTypes.RANDOM,
+                PlayerTypes.MONTE_CARLO_AI,
+            }:
                 game_display.get_random_bid(game_state.PLAYERS[player_num])
 
         game_state, new_hand = do_bidding_loop(
@@ -247,6 +283,25 @@ def main():
         )
 
         display_final_scores(screen, game_state, clock)
+
+
+def get_clicked_menu_option(buttons: list[Button]):
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            raise SystemExit
+        if event.type == pygame.MOUSEBUTTONUP:
+            for button in buttons:
+                if button.rect.collidepoint(event.pos):
+                    return button.menu_option
+    return None
+
+
+def draw_menu(screen, buttons):
+    screen.fill(BACKGROUND_COLOR)
+    for button in buttons:
+        draw_button(screen, button)
+    pygame.display.flip()
 
 
 def do_bidding_loop(
@@ -440,7 +495,7 @@ def get_random_card_to_play(game_state):
 def display_final_scores(screen, final_state, clock):
     final_scores = game.get_scores(final_state)
     continue_button = Button()
-    continue_button.render_message("Start new game")
+    continue_button.render_message("Menu")
     continue_button.visible = True
     continue_button.rect.top += 80
     while final_state.stage == GameStage.DONE:

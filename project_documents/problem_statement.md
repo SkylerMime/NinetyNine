@@ -21,9 +21,10 @@ it should be able to do this given any initial starting hand distribution, but t
 and test it for one specific hand distribution, and one chosen trump suit (Clubs),
 and each player's bid value will be "3", meaning they are trying to capture exactly three tricks.
 If the AI can achieve this goal on average more often than players making purely
-random choices, I will consider this a success.
+random choices, it will be a vast improvement.
 
 ### Detailed turn order
+
 - The AI will start by playing any card to the first trick.
 This is called the "led card," and its suit is the "led suit."
 - In clockwise order each other player will play a card to the table where:
@@ -37,6 +38,15 @@ This is called the "led card," and its suit is the "led suit."
 
 If on average the AI earns more points than either opponent, it has succeeded.
 
-## Implementation
+### The state space of Ninety Nine
 
-I will use the alpha-beta search algorithmm.
+Ninety Nine uses 36 unique cards, ranked Six through Ace in four suits. These cards are thoroughly
+dealt out to each player, resulting in (36 choose 12) * (24 choose 12) possible hand distributions, or 3*10^15.
+
+From this point, each player sets aside three cards as a bid, which means (12 choose 3)^3
+possible initial hand/bid distributions.
+
+This is the point where the double-dummy solver begins, and since not every card is legal to play,
+the exact state space for the rest of the game is difficult to determine. The upper bound would be if
+every card were legal to play every time, meaning that for each of nine tricks every player can choose any one of their
+nine hand cards to play: (9!)^3 possible orders of play, or 5*10^16.

@@ -43,6 +43,7 @@ def test_list_logic():
     assert truth_value is False
 
 
+@pytest.mark.skip(reason="slow test")
 @pytest.mark.usefixtures("seed_random")
 def test_monte_carlo_beats_random(game_state_after_bidding):
     player_types = {

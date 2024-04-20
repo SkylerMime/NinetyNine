@@ -2,11 +2,12 @@
 
 University Capstone Project
 
-AI to play the card game Ninety-Nine (invented by David Parlett)
+A computer implementation of the card game Ninety-Nine, invented by David Parlett.  
+Includes a GUI created with the Pygame library, and an optional AI opponent.
 
 ## How to use
 
-Ninety-Nine requires Python 3.12.
+NinetyNine requires Python 3.12. Previous versions may not be supported.
 
 The graphical version of the game requires Pygame, and the
 testing module requires Pytest. These libraries can be quickly
@@ -26,30 +27,38 @@ To run the testing suite:
 
 > pytest .
 
-## Development history
+## Technical Details
 
-My first attempt at creating the AI used an algorithm called the Monte Carlo
-Tree Search, but the results were disappointing. The algorithm ran slowly, and
-performed no better than randomly selecting moves. I was convinced I could get
-better performance, and decided to focus on a double-dummy solver, a solver
-that can always find the optimal move given the current state of the game (including
-all player's hands). I also decided to pass over the bidding stage, stipulating
-that the computer always bid three.
+### Monte Carlo Tree Search
 
-## The state space of Ninety Nine
+The AI uses an algorithm called the Monte Carlo
+Tree Search. This algorithm works by modeling all the possible game states as
+a tree, where each node represents a game state and each edge represents a card that
+can be played to enter the next state. In theory, this tree could be fully analyzed
+in order to find the best move for any given turn, but in practice the state space is
+too large for this to be computationally feasible.
 
-Ninety Nine uses 36 unique cards, ranked Six through Ace in four suits. These cards are thoroughly
-dealt out to each player, resulting in (36 choose 12) * (24 choose 12) possible hand distributions, or 3*10^15.
+The Monte Carlo Tree Search algorithm gets around this barrier by only searching a subset of the tree.
+Specifically, it tries to balance exploration and exploitation by probing a few different paths of
+the tree, and fully analyzing the ones that seem most promising.
 
-From this point, each player sets aside three cards as a bid, which means (12 choose 3)^3
-possible initial hand/bid distributions.
+For more detailed information on the MCTS algorithm, see the citations
 
-This is the point where the double-dummy solver begins, and since not every card is legal to play,
-the exact state space for the rest of the game is difficult to determine. The upper bound would be if
-every card were legal to play every time, meaning that for each of nine tricks every player can choose any one of their
-nine hand cards to play: (9!)^3 possible orders of play, or 5*10^16.
+> CITATIONS.md
 
-## The double-dummy solver
+### Further Research
 
-For more in-depth information on this stage of development and testing, see
+Unfortunately, the algorithm as I have implemented it seems to
+perform no better than one which randomly selects moves. With further development, and possibly
+a different choice of algorithms, I could get better results.
+
+The algorithm as written now has knowledge of the cards players hold. This is called a Double Dummy
+algorithm in computer card terminology, and an ideal algorithm would perform without knowledge
+of the other cards in order to put it on an equal level with the human players. After an algorithm
+is developed to play the perfect-information game well, this would be the next step.
+
+Some ideas about how this could work, and a detailed problem statement, can be found in the project documents
+
 > project_documents/double_dummy_solver.md
+
+Finally, I have not implemented any bidding engine for the AI -- instead, it chooses its bid randomly.
