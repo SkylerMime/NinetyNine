@@ -3,7 +3,7 @@ import random
 import pygame
 from ninety_nine import ninety_nine_state as game
 from ninety_nine import human_ai_main_game as game_display
-from ninety_nine.ninety_nine_state import Card
+from ninety_nine.ninety_nine_state import Card, Trick
 from ninety_nine.constants import (
     PlayerTypes,
     Rank,
@@ -77,7 +77,12 @@ TRICKS_TAKEN_MESSAGE_LEFT = WINDOW_WIDTH - TRICKS_TAKEN_MESSAGE_WIDTH - 10
 PRIMARY_TRICK_TOP = BID_TOP + 20
 PRIMARY_TRICK_LEFT = WINDOW_WIDTH // 2 - CARD_WIDTH // 2
 
-TRICK_POSITIONS = [
+TRICK_INITIAL_POSITIONS = [
+    pygame.Rect(WINDOW_WIDTH // 2 - CARD_WIDTH // 2, HAND_TOP, CARD_WIDTH, CARD_HEIGHT),
+    pygame.Rect(0, PRIMARY_TRICK_TOP - CARD_HEIGHT, CARD_WIDTH, CARD_HEIGHT),
+    pygame.Rect(WINDOW_WIDTH, PRIMARY_TRICK_TOP - CARD_HEIGHT, CARD_WIDTH, CARD_HEIGHT),
+]
+TRICK_FINAL_POSITIONS = [
     pygame.Rect(PRIMARY_TRICK_LEFT, PRIMARY_TRICK_TOP, CARD_WIDTH, CARD_HEIGHT),
     pygame.Rect(
         PRIMARY_TRICK_LEFT - CARD_WIDTH - 40,
@@ -104,6 +109,7 @@ TEXTVIEW_COLOR = WHITE
 TEXTVIEW_TEXT_COLOR = BLACK
 
 MILLISECONDS_BETWEEN_PLAYS = 900
+FRAMES_PER_SECOND = 180
 
 
 class TextView:
@@ -183,7 +189,8 @@ def main():
             menu_string = menu_option.value
             new_button = Button()
             new_button.rect.left = (
-                MENU_LEFT_START + (BUTTON_WIDTH + SPACE_BETWEEN_MENU_BUTTONS) * option_num
+                MENU_LEFT_START
+                + (BUTTON_WIDTH + SPACE_BETWEEN_MENU_BUTTONS) * option_num
             )
             new_button.render_message(menu_string)
             new_button.menu_option = menu_option
@@ -193,7 +200,7 @@ def main():
             selected_menu_option = get_clicked_menu_option(buttons)
             # graphics
             draw_menu(screen, buttons)
-            clock.tick(60)
+            clock.tick(FRAMES_PER_SECOND)
 
         player_types = PLAYER_TYPES
         match selected_menu_option:
@@ -365,7 +372,7 @@ def do_bidding_loop(
             draw_button(screen, continue_button)
 
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(FRAMES_PER_SECOND)
 
     return game_state, clickable_hand
 
@@ -388,6 +395,7 @@ def do_playing_loop(
     continue_button.visible = False
     center_cards(clickable_hand)
     time_of_next_play = pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
+    current_trick_positions: list[None | pygame.Rect] = [None] * 3
     while game_state.stage == GameStage.PLAYING:
         if (
             pygame.time.get_ticks() > time_of_next_play
@@ -420,6 +428,7 @@ def do_playing_loop(
                     )
                     clickable_hand = get_clickable_cards(sorted_hand, images_dict)
                     center_cards(clickable_hand)
+                    current_trick_positions[HUMAN_PLAYER_NUM] = clicked_card.display_area
                     time_of_next_play = (
                         pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
                     )
@@ -427,6 +436,7 @@ def do_playing_loop(
                     event.pos
                 ):
                     game_state = game.finish_trick(game_state)
+                    current_trick_positions = [None] * 3
                     continue_button.visible = False
 
         # logical updates here
@@ -435,6 +445,9 @@ def do_playing_loop(
             and pygame.time.get_ticks() > time_of_next_play
         ):
             card_to_play = get_random_card_to_play(game_state)
+            current_trick_positions[game_state.next_to_play] = TRICK_INITIAL_POSITIONS[
+                game_state.next_to_play
+            ].copy()
             game_state = game.make_card_play(
                 game_state, game_state.next_to_play, card_to_play
             )
@@ -449,6 +462,9 @@ def do_playing_loop(
             mcst.search(1)
             card_to_play = mcst.best_move()
             mcst.play_card(card_to_play)
+            current_trick_positions[game_state.next_to_play] = TRICK_INITIAL_POSITIONS[
+                game_state.next_to_play
+            ].copy()
             game_state = game.make_card_play(
                 game_state, game_state.next_to_play, card_to_play
             )
@@ -461,6 +477,7 @@ def do_playing_loop(
             and pygame.time.get_ticks() > time_of_next_play
         ):
             game_state.stage = GameStage.DONE
+            continue_button.render_message("See scores") # TODO: Why doesn't this show in the game?
 
         if tricks_taken_message:
             tricks_taken = game_state.PLAYERS[HUMAN_PLAYER_NUM].tricks_won
@@ -469,7 +486,8 @@ def do_playing_loop(
         # render graphics here
         screen.fill(BACKGROUND_COLOR)
         draw_clickable_cards(screen, clickable_hand)
-        draw_trick(screen, game_state.current_trick, images_dict)
+        move_cards_toward(current_trick_positions, TRICK_FINAL_POSITIONS)
+        draw_trick(screen, game_state.current_trick, images_dict, current_trick_positions)
         if trump_message:
             draw_message(screen, trump_message)
         if bid_message:
@@ -481,7 +499,7 @@ def do_playing_loop(
             draw_button(screen, continue_button)
 
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(FRAMES_PER_SECOND)
 
     return game_state
 
@@ -531,7 +549,28 @@ def display_final_scores(screen, final_state, clock):
             draw_button(screen, continue_button)
 
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(FRAMES_PER_SECOND)
+
+
+def move_cards_toward(current_rects: list[pygame.Rect], end_rects: list[pygame.Rect], speed=4):
+    for player, rect in enumerate(current_rects):
+        if rect is not None:
+            final_rect: pygame.Rect = end_rects[player]
+            # if the rect is within "speed" of its destination, move it there
+            if abs(final_rect.x - rect.x) < speed:
+                current_rects[player].x = final_rect.x
+            if abs(final_rect.y - rect.y) < speed:
+                current_rects[player].y = final_rect.y
+
+            if final_rect.x > rect.x:
+                rect.x += speed
+            elif final_rect.x < rect.x:
+                rect.x -= speed
+
+            if final_rect.y > rect.y:
+                rect.y += speed
+            elif final_rect.y < rect.y:
+                rect.y -= speed
 
 
 def draw_trick(
@@ -541,7 +580,7 @@ def draw_trick(
     trick_positions=None,
 ):
     if trick_positions is None:
-        trick_positions = TRICK_POSITIONS
+        trick_positions = TRICK_FINAL_POSITIONS
     cards: dict = trick.cards
     for player, card in cards.items():
         card_image = images_dict[card.suit.name.lower()][card.rank.name.lower()]
