@@ -1,3 +1,4 @@
+import math
 import random
 
 import pygame
@@ -396,6 +397,7 @@ def do_playing_loop(
     center_cards(clickable_hand)
     time_of_next_play = pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
     current_trick_positions: list[None | pygame.Rect] = [None] * 3
+    current_trick_vectors: list[None | tuple[float, float]] = [None] * 3
     while game_state.stage == GameStage.PLAYING:
         if (
             pygame.time.get_ticks() > time_of_next_play
@@ -428,7 +430,15 @@ def do_playing_loop(
                     )
                     clickable_hand = get_clickable_cards(sorted_hand, images_dict)
                     center_cards(clickable_hand)
-                    current_trick_positions[HUMAN_PLAYER_NUM] = clicked_card.display_area
+                    current_trick_positions[
+                        HUMAN_PLAYER_NUM
+                    ] = clicked_card.display_area
+                    current_trick_vectors[
+                        HUMAN_PLAYER_NUM
+                    ] = get_movement_vector_toward(
+                        current_trick_positions[HUMAN_PLAYER_NUM].center,
+                        TRICK_FINAL_POSITIONS[HUMAN_PLAYER_NUM].center,
+                    )
                     time_of_next_play = (
                         pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
                     )
@@ -448,6 +458,10 @@ def do_playing_loop(
             current_trick_positions[game_state.next_to_play] = TRICK_INITIAL_POSITIONS[
                 game_state.next_to_play
             ].copy()
+            current_trick_vectors[game_state.next_to_play] = get_movement_vector_toward(
+                current_trick_positions[game_state.next_to_play].center,
+                TRICK_FINAL_POSITIONS[game_state.next_to_play].center,
+            )
             game_state = game.make_card_play(
                 game_state, game_state.next_to_play, card_to_play
             )
@@ -465,6 +479,10 @@ def do_playing_loop(
             current_trick_positions[game_state.next_to_play] = TRICK_INITIAL_POSITIONS[
                 game_state.next_to_play
             ].copy()
+            current_trick_vectors[game_state.next_to_play] = get_movement_vector_toward(
+                current_trick_positions[game_state.next_to_play].center,
+                TRICK_FINAL_POSITIONS[game_state.next_to_play].center,
+            )
             game_state = game.make_card_play(
                 game_state, game_state.next_to_play, card_to_play
             )
@@ -477,7 +495,9 @@ def do_playing_loop(
             and pygame.time.get_ticks() > time_of_next_play
         ):
             game_state.stage = GameStage.DONE
-            continue_button.render_message("See scores") # TODO: Why doesn't this show in the game?
+            continue_button.render_message(
+                "See scores"
+            )  # TODO: Why doesn't this show in the game?
 
         if tricks_taken_message:
             tricks_taken = game_state.PLAYERS[HUMAN_PLAYER_NUM].tricks_won
@@ -486,8 +506,12 @@ def do_playing_loop(
         # render graphics here
         screen.fill(BACKGROUND_COLOR)
         draw_clickable_cards(screen, clickable_hand)
-        move_cards_toward(current_trick_positions, TRICK_FINAL_POSITIONS)
-        draw_trick(screen, game_state.current_trick, images_dict, current_trick_positions)
+        move_cards_toward(
+            current_trick_positions, TRICK_FINAL_POSITIONS, current_trick_vectors
+        )
+        draw_trick(
+            screen, game_state.current_trick, images_dict, current_trick_positions
+        )
         if trump_message:
             draw_message(screen, trump_message)
         if bid_message:
@@ -552,25 +576,33 @@ def display_final_scores(screen, final_state, clock):
         clock.tick(FRAMES_PER_SECOND)
 
 
-def move_cards_toward(current_rects: list[pygame.Rect], end_rects: list[pygame.Rect], speed=4):
+def get_movement_vector_toward(
+    initial_pos: tuple[int, int], final_pos: tuple[int, int], ticks_to_reach = 100
+):
+    tip_to_tail = (final_pos[0] - initial_pos[0], final_pos[1] - initial_pos[1])
+    return tip_to_tail[0] / ticks_to_reach, tip_to_tail[1] / ticks_to_reach
+
+
+def magnitude(vector: tuple[float, float]):
+    return math.sqrt(vector[0] ** 2 + vector[1] ** 2)
+
+
+def move_cards_toward(
+    current_rects: list[pygame.Rect],
+    end_rects: list[pygame.Rect],
+    vectors: list[tuple[float, float]],
+):
     for player, rect in enumerate(current_rects):
         if rect is not None:
             final_rect: pygame.Rect = end_rects[player]
             # if the rect is within "speed" of its destination, move it there
-            if abs(final_rect.x - rect.x) < speed:
+            if abs(final_rect.x - rect.x) < magnitude(vectors[player]):
                 current_rects[player].x = final_rect.x
-            if abs(final_rect.y - rect.y) < speed:
+            if abs(final_rect.y - rect.y) < magnitude(vectors[player]):
                 current_rects[player].y = final_rect.y
 
-            if final_rect.x > rect.x:
-                rect.x += speed
-            elif final_rect.x < rect.x:
-                rect.x -= speed
-
-            if final_rect.y > rect.y:
-                rect.y += speed
-            elif final_rect.y < rect.y:
-                rect.y -= speed
+            rect.x += vectors[player][0]
+            rect.y += vectors[player][1]
 
 
 def draw_trick(

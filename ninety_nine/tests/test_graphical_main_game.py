@@ -493,3 +493,11 @@ def test_playing_loop_with_mcst_versus_random(
 def test_main_menu_continue():
     selected_option = graphics.get_clicked_menu_option()
     assert selected_option == "Main Game"
+
+
+def test_mangitude():
+    assert graphics.magnitude((3, 4)) == 5
+
+
+def test_vector_directing():
+    assert graphics.get_movement_vector_toward((489, 509), (575, 200)) == (86 / 100, -309 / 100)
