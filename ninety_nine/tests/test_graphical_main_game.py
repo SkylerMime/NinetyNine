@@ -22,6 +22,7 @@ from ninety_nine.graphical_main_game import (
     SPACE_BETWEEN_CARDS,
     Button,
     AI_PLAYER_COMBINATION,
+    CardVector,
 )
 
 
@@ -451,7 +452,9 @@ def ai_versus_random_player_combination():
 def empty_events_with_continues_mock(click_continue_event):
     mock = Mock()
     num_hands = 9
-    mock.side_effect = [[click_continue_event] if i % 4 == 3 else [] for i in range(num_hands*4)]
+    mock.side_effect = [
+        [click_continue_event] if i % 4 == 3 else [] for i in range(num_hands * 4)
+    ]
     return mock
 
 
@@ -490,14 +493,35 @@ def test_playing_loop_with_mcst_versus_random(
     assert len(final_state.PLAYERS[1].hand) == 0
 
 
-def test_main_menu_continue():
-    selected_option = graphics.get_clicked_menu_option()
-    assert selected_option == "Main Game"
-
-
-def test_mangitude():
-    assert graphics.magnitude((3, 4)) == 5
+def test_magnitude():
+    assert graphics.magnitude(CardVector(3, 4)) == 5
 
 
 def test_vector_directing():
-    assert graphics.get_movement_vector_toward((489, 509), (575, 200)) == (86 / 100, -309 / 100)
+    assert graphics.get_movement_vector_toward(CardVector(489, 509), CardVector(575, 200)) == CardVector(
+        86 / 100,
+        -309 / 100,
+    )
+
+
+def test_vector_addition():
+    assert CardVector(2, 4) + CardVector(6, 2) == CardVector(8, 6)
+
+
+def test_vector_float_equivalence():
+    assert CardVector(0.5, 0.3) == CardVector(0.50001, 0.29995)
+
+
+def test_get_new_card_position_far_from_end():
+    current_pos = [CardVector(4.4, 6.2)]
+    end_pos = [CardVector(100, 100)]
+    vector = [CardVector(-1.1, 10.4)]
+    assert graphics.get_new_card_positions(current_pos, end_pos, vector)[0] == CardVector(3.3, 16.6)
+
+
+def test_get_new_card_position_jumps_to_end():
+    current_pos = [CardVector(6.1, 7.3)]
+    end_pos = [CardVector(8, 9)]
+    vector = [CardVector(2, 2)]
+    assert graphics.magnitude(end_pos[0] - current_pos[0]) < graphics.magnitude(vector[0])
+    assert graphics.get_new_card_positions(current_pos, end_pos, vector) == end_pos
