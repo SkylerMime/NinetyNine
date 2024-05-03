@@ -16,3 +16,11 @@ I used this one as a template for my Ninety Nine version
 This last implementation was invaluable to me for testing and learning about the algorithm
 
 ChatGPT was a helpful tool for the development process
+
+---
+
+Poster image credit:
+
+MCTS Algorithm
+Robert Moss, CC BY-SA 4.0 <https://creativecommons.org/licenses/by-sa/4.0>, via Wikimedia Commons
+
