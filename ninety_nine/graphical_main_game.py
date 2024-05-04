@@ -1,4 +1,7 @@
+import math
 import random
+from dataclasses import dataclass
+from typing import Self
 
 import pygame
 from ninety_nine import ninety_nine_state as game
@@ -13,6 +16,7 @@ from ninety_nine.constants import (
     PLAYER_TYPES,
     NUM_TRICKS,
     NUM_PLAYERS,
+    MenuOptions,
 )
 from ninety_nine.monte_carlo_tree_search import NinetyNineMCST
 
@@ -53,6 +57,11 @@ BUTTON_TOP = HAND_TOP - BUTTON_HEIGHT - 20
 BUTTON_HORIZONTAL_CENTER = WINDOW_WIDTH // 2
 BUTTON_LEFT = BUTTON_HORIZONTAL_CENTER - BUTTON_WIDTH // 2
 
+SPACE_BETWEEN_MENU_BUTTONS = 20
+NUM_OPTIONS = len(MenuOptions)
+WIDTH_OF_FULL_MENU = (BUTTON_WIDTH + SPACE_BETWEEN_MENU_BUTTONS - 1) * NUM_OPTIONS
+MENU_LEFT_START = BUTTON_HORIZONTAL_CENTER - (WIDTH_OF_FULL_MENU // 2)
+
 TEXTVIEW_WIDTH = 360
 TEXTVIEW_HEIGHT = 90
 TEXTVIEW_TOP = 10
@@ -71,19 +80,41 @@ TRICKS_TAKEN_MESSAGE_LEFT = WINDOW_WIDTH - TRICKS_TAKEN_MESSAGE_WIDTH - 10
 PRIMARY_TRICK_TOP = BID_TOP + 20
 PRIMARY_TRICK_LEFT = WINDOW_WIDTH // 2 - CARD_WIDTH // 2
 
-TRICK_POSITIONS = [
-    pygame.Rect(PRIMARY_TRICK_LEFT, PRIMARY_TRICK_TOP, CARD_WIDTH, CARD_HEIGHT),
-    pygame.Rect(
+
+@dataclass
+class CardVector:
+    x: float
+    y: float
+
+    def __add__(self, vector: Self):
+        return CardVector(self.x + vector.x, self.y + vector.y)
+
+    def __sub__(self, vector: Self):
+        return CardVector(self.x - vector.x, self.y - vector.y)
+
+    def __truediv__(self, other: float):
+        return CardVector(self.x / other, self.y / other)
+
+    def __eq__(self, vector: Self):
+        delta = 0.01
+        if isinstance(vector, CardVector):
+            return abs(self.x - vector.x) < delta and abs(self.y - vector.y) < delta
+
+
+TRICK_INITIAL_POSITIONS = [
+    None,
+    CardVector(0, PRIMARY_TRICK_TOP - CARD_HEIGHT),
+    CardVector(WINDOW_WIDTH, PRIMARY_TRICK_TOP - CARD_HEIGHT),
+]
+TRICK_FINAL_POSITIONS = [
+    CardVector(PRIMARY_TRICK_LEFT, PRIMARY_TRICK_TOP),
+    CardVector(
         PRIMARY_TRICK_LEFT - CARD_WIDTH - 40,
-        PRIMARY_TRICK_TOP - CARD_HEIGHT,
-        CARD_WIDTH,
-        CARD_HEIGHT,
+        PRIMARY_TRICK_TOP - CARD_HEIGHT / 2,
     ),
-    pygame.Rect(
+    CardVector(
         PRIMARY_TRICK_LEFT + CARD_WIDTH + 40,
-        PRIMARY_TRICK_TOP - CARD_HEIGHT,
-        CARD_WIDTH,
-        CARD_HEIGHT,
+        PRIMARY_TRICK_TOP - CARD_HEIGHT / 2,
     ),
 ]
 
@@ -98,6 +129,8 @@ TEXTVIEW_COLOR = WHITE
 TEXTVIEW_TEXT_COLOR = BLACK
 
 MILLISECONDS_BETWEEN_PLAYS = 900
+# If this number is too high, the system could crash
+FRAMES_PER_SECOND = 120
 
 
 class TextView:
@@ -105,8 +138,8 @@ class TextView:
         self.rect = pygame.Rect(
             TEXTVIEW_LEFT, TEXTVIEW_TOP, TEXTVIEW_WIDTH, TEXTVIEW_HEIGHT
         )
-        self.bg_color = (TEXTVIEW_COLOR,)
-        self.text_color = (TEXTVIEW_TEXT_COLOR,)
+        self.bg_color = TEXTVIEW_COLOR
+        self.text_color = TEXTVIEW_TEXT_COLOR
         self.message = "Hello World"
         self.rendered_text = None
         self.render_message()
@@ -129,6 +162,7 @@ class Button(TextView):
         self.text_color = (BUTTON_TEXT_COLOR,)
         self.message = "Confirm Bid"
         self.visible = False
+        self.menu_option: MenuOptions | None = None
 
 
 class ClickableCard(Card):
@@ -163,6 +197,7 @@ class ClickableCard(Card):
         return False
 
 
+
 def main():
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -170,9 +205,36 @@ def main():
     clock = pygame.time.Clock()
 
     while True:
-        # player_types = PLAYER_TYPES  # TODO: Control based on player input
-        player_types = AI_PLAYER_COMBINATION
-        # display_welcome_message()
+        selected_menu_option = None
+        buttons = []
+        for option_num, menu_option in enumerate(MenuOptions):
+            menu_string = menu_option.value
+            new_button = Button()
+            new_button.rect.left = (
+                MENU_LEFT_START
+                + (BUTTON_WIDTH + SPACE_BETWEEN_MENU_BUTTONS) * option_num
+            )
+            new_button.render_message(menu_string)
+            new_button.menu_option = menu_option
+            buttons.append(new_button)
+
+        while not selected_menu_option:
+            selected_menu_option = get_clicked_menu_option(buttons)
+            # graphics
+            draw_menu(screen, buttons)
+            clock.tick(FRAMES_PER_SECOND)
+
+        player_types = PLAYER_TYPES
+        match selected_menu_option:
+            case MenuOptions.MAIN_GAME:
+                player_types = PLAYER_TYPES
+            case MenuOptions.AI_GAME:
+                player_types = AI_PLAYER_COMBINATION
+            case MenuOptions.QUIT:
+                pygame.quit()
+                raise SystemExit
+            case _:
+                raise SystemExit("Invalid menu option")
 
         images_dict = make_images_dict(game.get_all_cards())
 
@@ -214,7 +276,10 @@ def main():
         clickable_bid = get_clickable_cards(list(human_player.bid), images_dict)
 
         for player_num in range(num_players):
-            if player_types[player_num] in {PlayerTypes.RANDOM, PlayerTypes.MONTE_CARLO_AI}:
+            if player_types[player_num] in {
+                PlayerTypes.RANDOM,
+                PlayerTypes.MONTE_CARLO_AI,
+            }:
                 game_display.get_random_bid(game_state.PLAYERS[player_num])
 
         game_state, new_hand = do_bidding_loop(
@@ -242,11 +307,30 @@ def main():
             trump_message,
             bid_message,
             tricks_taken_message,
-            player_types=AI_PLAYER_COMBINATION,
+            player_types=player_types,
             mcst=mcst,
         )
 
         display_final_scores(screen, game_state, clock)
+
+
+def get_clicked_menu_option(buttons: list[Button]):
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            raise SystemExit
+        if event.type == pygame.MOUSEBUTTONUP:
+            for button in buttons:
+                if button.rect.collidepoint(event.pos):
+                    return button.menu_option
+    return None
+
+
+def draw_menu(screen, buttons):
+    screen.fill(BACKGROUND_COLOR)
+    for button in buttons:
+        draw_button(screen, button)
+    pygame.display.flip()
 
 
 def do_bidding_loop(
@@ -310,7 +394,7 @@ def do_bidding_loop(
             draw_button(screen, continue_button)
 
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(FRAMES_PER_SECOND)
 
     return game_state, clickable_hand
 
@@ -333,6 +417,8 @@ def do_playing_loop(
     continue_button.visible = False
     center_cards(clickable_hand)
     time_of_next_play = pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
+    current_trick_positions: list[None | CardVector] = [None] * 3
+    current_trick_vectors: list[None | CardVector] = [None] * 3
     while game_state.stage == GameStage.PLAYING:
         if (
             pygame.time.get_ticks() > time_of_next_play
@@ -365,6 +451,15 @@ def do_playing_loop(
                     )
                     clickable_hand = get_clickable_cards(sorted_hand, images_dict)
                     center_cards(clickable_hand)
+                    current_trick_positions[
+                        HUMAN_PLAYER_NUM
+                    ] = CardVector(clicked_card.display_area.x, clicked_card.display_area.y)
+                    current_trick_vectors[
+                        HUMAN_PLAYER_NUM
+                    ] = get_movement_vector_toward(
+                        current_trick_positions[HUMAN_PLAYER_NUM],
+                        TRICK_FINAL_POSITIONS[HUMAN_PLAYER_NUM],
+                    )
                     time_of_next_play = (
                         pygame.time.get_ticks() + MILLISECONDS_BETWEEN_PLAYS
                     )
@@ -372,6 +467,7 @@ def do_playing_loop(
                     event.pos
                 ):
                     game_state = game.finish_trick(game_state)
+                    current_trick_positions = [None] * 3
                     continue_button.visible = False
 
         # logical updates here
@@ -380,6 +476,13 @@ def do_playing_loop(
             and pygame.time.get_ticks() > time_of_next_play
         ):
             card_to_play = get_random_card_to_play(game_state)
+            current_trick_positions[game_state.next_to_play] = TRICK_INITIAL_POSITIONS[
+                game_state.next_to_play
+            ]
+            current_trick_vectors[game_state.next_to_play] = get_movement_vector_toward(
+                current_trick_positions[game_state.next_to_play],
+                TRICK_FINAL_POSITIONS[game_state.next_to_play],
+            )
             game_state = game.make_card_play(
                 game_state, game_state.next_to_play, card_to_play
             )
@@ -394,6 +497,13 @@ def do_playing_loop(
             mcst.search(1)
             card_to_play = mcst.best_move()
             mcst.play_card(card_to_play)
+            current_trick_positions[game_state.next_to_play] = TRICK_INITIAL_POSITIONS[
+                game_state.next_to_play
+            ]
+            current_trick_vectors[game_state.next_to_play] = get_movement_vector_toward(
+                current_trick_positions[game_state.next_to_play],
+                TRICK_FINAL_POSITIONS[game_state.next_to_play],
+            )
             game_state = game.make_card_play(
                 game_state, game_state.next_to_play, card_to_play
             )
@@ -406,6 +516,9 @@ def do_playing_loop(
             and pygame.time.get_ticks() > time_of_next_play
         ):
             game_state.stage = GameStage.DONE
+            continue_button.render_message(
+                "See scores"
+            )  # TODO: Why doesn't this show in the game?
 
         if tricks_taken_message:
             tricks_taken = game_state.PLAYERS[HUMAN_PLAYER_NUM].tricks_won
@@ -414,7 +527,12 @@ def do_playing_loop(
         # render graphics here
         screen.fill(BACKGROUND_COLOR)
         draw_clickable_cards(screen, clickable_hand)
-        draw_trick(screen, game_state.current_trick, images_dict)
+        current_trick_positions = get_new_card_positions(
+            current_trick_positions, TRICK_FINAL_POSITIONS, current_trick_vectors
+        )
+        draw_trick(
+            screen, game_state.current_trick, images_dict, current_trick_positions
+        )
         if trump_message:
             draw_message(screen, trump_message)
         if bid_message:
@@ -426,7 +544,7 @@ def do_playing_loop(
             draw_button(screen, continue_button)
 
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(FRAMES_PER_SECOND)
 
     return game_state
 
@@ -440,7 +558,7 @@ def get_random_card_to_play(game_state):
 def display_final_scores(screen, final_state, clock):
     final_scores = game.get_scores(final_state)
     continue_button = Button()
-    continue_button.render_message("Start new game")
+    continue_button.render_message("Menu")
     continue_button.visible = True
     continue_button.rect.top += 80
     while final_state.stage == GameStage.DONE:
@@ -476,7 +594,36 @@ def display_final_scores(screen, final_state, clock):
             draw_button(screen, continue_button)
 
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(FRAMES_PER_SECOND)
+
+
+def get_movement_vector_toward(
+    initial_pos: CardVector, final_pos: CardVector, ticks_to_reach = 100
+):
+    tip_to_tail: CardVector = final_pos - initial_pos
+    return tip_to_tail / ticks_to_reach
+
+
+def magnitude(vector: CardVector):
+    return math.sqrt(vector.x ** 2 + vector.y ** 2)
+
+
+def get_new_card_positions(
+    current_positions: list[CardVector],
+    end_positions: list[CardVector],
+    vectors: list[CardVector],
+):
+    assert len(current_positions) == len(end_positions) == len(vectors)
+    new_positions = [None]*len(current_positions)
+    for player, pos in enumerate(current_positions):
+        if pos is not None:
+            final_pos: CardVector = end_positions[player]
+            # if the rect is within "speed" of its destination, move it there
+            if magnitude(final_pos - pos) < magnitude(vectors[player]):
+                new_positions[player] = final_pos
+            else:
+                new_positions[player] = current_positions[player] + vectors[player]
+    return new_positions
 
 
 def draw_trick(
@@ -486,11 +633,11 @@ def draw_trick(
     trick_positions=None,
 ):
     if trick_positions is None:
-        trick_positions = TRICK_POSITIONS
+        trick_positions = TRICK_FINAL_POSITIONS
     cards: dict = trick.cards
     for player, card in cards.items():
         card_image = images_dict[card.suit.name.lower()][card.rank.name.lower()]
-        screen.blit(card_image, trick_positions[player])
+        screen.blit(card_image, (trick_positions[player].x, trick_positions[player].y, CARD_WIDTH, CARD_HEIGHT))
 
 
 def draw_button(screen: pygame.Surface, button: Button):
@@ -607,7 +754,7 @@ def get_image_filename_from_card(card: game.Card):
         case "six":
             image_rank = "6"
     image_suit = str(card.suit.name).lower()
-    return f"{IMAGES_DIRECTORY_PATH}/{image_suit}_{image_rank}.png"
+    return f"{IMAGES_DIRECTORY_PATH}/{image_suit}_{image_rank}.svg"
 
 
 if __name__ == "__main__":

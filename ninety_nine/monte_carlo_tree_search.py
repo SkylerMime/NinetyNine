@@ -1,3 +1,11 @@
+"""
+Monte Carlo Tree Search algorithm for NinetyNine
+The algorithm as currently implemented makes
+decisions according to the actual game state, rather
+than the limited information a player would have access to.
+This means that the AI will know all the cards in the other player's hands.
+"""
+
 from __future__ import annotations
 
 import random
