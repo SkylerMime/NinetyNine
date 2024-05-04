@@ -29,6 +29,8 @@ ChatGPT was a helpful tool for the development process
 
 Poster image credit:
 
-MCTS Algorithm
+MCTS Algorithm:
 Robert Moss, CC BY-SA 4.0 <https://creativecommons.org/licenses/by-sa/4.0>, via Wikimedia Commons
 
+White Paper Screenshot:
+For the paper cited above, available as an abstract at that link

@@ -15,13 +15,13 @@ installed using the requirements.txt file:
 
 > pip install -r requirements.txt
 
-To run the graphical version of the game:
+To run the graphical version of the game, call the module from the NinetyNine directory:
 
-> python3 ninety_nine/graphical_main_game.py
+> python3 -m ninety_nine.graphical_main_game
 
-Or the command line version:
+Or call this module for the command line version:
 
-> python3 ninety_nine/human_ai_main_game.py
+> python3 -m ninety_nine.human_ai_main_game
 
 To run the testing suite:
 
@@ -59,6 +59,6 @@ is developed to play the perfect-information game well, this would be the next s
 
 Some ideas about how this could work, and a detailed problem statement, can be found in the project documents
 
-> project_documents/double_dummy_solver.md
+> project_documents/problem_statement.md
 
 Finally, I have not implemented any bidding engine for the AI -- instead, it chooses its bid randomly.

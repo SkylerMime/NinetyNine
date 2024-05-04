@@ -21,7 +21,7 @@ from ninety_nine.constants import (
 from ninety_nine.monte_carlo_tree_search import NinetyNineMCST
 
 IMAGES_DIRECTORY_PATH = (
-    "/Users/Skyler/Coding/PythonPrograms/NinetyNine/ninety_nine/card_images"
+    "ninety_nine/card_images"
 )
 
 NUM_CARDS = NUM_CARDS_IN_BID + NUM_TRICKS
