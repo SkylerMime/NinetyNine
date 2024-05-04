@@ -102,19 +102,19 @@ class CardVector:
 
 
 TRICK_INITIAL_POSITIONS = [
-    CardVector(WINDOW_WIDTH // 2 - CARD_WIDTH // 2, HAND_TOP),
+    None,
     CardVector(0, PRIMARY_TRICK_TOP - CARD_HEIGHT),
-    CardVector(WINDOW_WIDTH, PRIMARY_TRICK_TOP),
+    CardVector(WINDOW_WIDTH, PRIMARY_TRICK_TOP - CARD_HEIGHT),
 ]
 TRICK_FINAL_POSITIONS = [
     CardVector(PRIMARY_TRICK_LEFT, PRIMARY_TRICK_TOP),
     CardVector(
         PRIMARY_TRICK_LEFT - CARD_WIDTH - 40,
-        PRIMARY_TRICK_TOP - CARD_HEIGHT,
+        PRIMARY_TRICK_TOP - CARD_HEIGHT / 2,
     ),
     CardVector(
         PRIMARY_TRICK_LEFT + CARD_WIDTH + 40,
-        PRIMARY_TRICK_TOP - CARD_HEIGHT,
+        PRIMARY_TRICK_TOP - CARD_HEIGHT / 2,
     ),
 ]
 
@@ -453,7 +453,7 @@ def do_playing_loop(
                     center_cards(clickable_hand)
                     current_trick_positions[
                         HUMAN_PLAYER_NUM
-                    ] = CardVector(clicked_card.display_area.centerx, clicked_card.display_area.centery)
+                    ] = CardVector(clicked_card.display_area.x, clicked_card.display_area.y)
                     current_trick_vectors[
                         HUMAN_PLAYER_NUM
                     ] = get_movement_vector_toward(
@@ -527,7 +527,7 @@ def do_playing_loop(
         # render graphics here
         screen.fill(BACKGROUND_COLOR)
         draw_clickable_cards(screen, clickable_hand)
-        get_new_card_positions(
+        current_trick_positions = get_new_card_positions(
             current_trick_positions, TRICK_FINAL_POSITIONS, current_trick_vectors
         )
         draw_trick(
