@@ -12,7 +12,7 @@ tagline: "CSUCI Capstone Project"
 description: 'A Pygame implementation of the card game Ninety-Nine. Created by <a href=GitHub.com/SkylerMime target="_blank">Skyler Atchison</a>'
 domain: skylermime.github.io
 url: https://skylermime.github.io
-baseurl: NinetyNine
+baseurl: /NinetyNine
 github_username: SkylerMime
 
 # Custom vars
