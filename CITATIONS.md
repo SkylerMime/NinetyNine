@@ -1,5 +1,5 @@
 Playing Card assets from [https://mreliptik.itch.io/](mreliptik)
-Website theme is [from http://hyde.getpoole.com/](Hyde)
+Website theme is [https://hyde.getpoole.com/](Hyde)
 
 ---
 
