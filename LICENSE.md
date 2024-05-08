@@ -1,4 +1,4 @@
-MIT License
+# Released under MIT License
 
 Copyright (c) 2023 SkylerA
 
