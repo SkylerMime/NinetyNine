@@ -95,10 +95,12 @@ class CardVector:
     def __truediv__(self, other: float):
         return CardVector(self.x / other, self.y / other)
 
-    def __eq__(self, vector: Self):
+    def __eq__(self, vector):
         delta = 0.01
         if isinstance(vector, CardVector):
             return abs(self.x - vector.x) < delta and abs(self.y - vector.y) < delta
+        else:
+            return False
 
 
 TRICK_INITIAL_POSITIONS = [
