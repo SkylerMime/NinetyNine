@@ -1,5 +1,6 @@
-Playing Card assets from [https://mreliptik.itch.io/](mreliptik)
-Website theme is [https://hyde.getpoole.com/](Hyde)
+Playing Card assets from [mreliptik](https://mreliptik.itch.io/)
+Website theme is [Hyde](https://hyde.getpoole.com/)
+Portrait credit to [@sierra_upsidedown](https://instagram.com/sierra_upsidedown)
 
 ---
 

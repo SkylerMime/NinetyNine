@@ -5,6 +5,7 @@ permalink: Bio
 ---
 
 ![Artistic Image of Skyler]({{site.url}}{{site.baseurl}}/images/DigitalArt.jpeg){:class="img-responsive"}
+_Image credit: [@sierra_upsidedown](https://instagram.com/sierra_upsidedown)_
 
 I am a recent graduate of California State University Channel Islands,
 from which I earned my B.S. in Computer Science. Aside from creating this Capstone project,
