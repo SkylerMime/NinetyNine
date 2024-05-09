@@ -26,7 +26,6 @@ PLAYER_TYPES = {
 class MenuOptions(Enum):
     MAIN_GAME = "Main Game"
     AI_GAME = "AI Game"
-    TUTORIAL = "Tutorial"
     QUIT = "Quit"
 
 
