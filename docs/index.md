@@ -1,7 +1,9 @@
 ---
-layout: page
+layout: default
 title: About
 ---
+
+# About
 
 Ninety-Nine Pygame is a computer implementation of the card game [Ninety-Nine](https://www.parlettgames.uk/oricards/ninety9.html), invented by [David Parlett](https://parlettgames.uk/).
 My project includes a GUI created with the Pygame library, and an optional AI opponent.
