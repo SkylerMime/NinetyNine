@@ -1,6 +1,7 @@
 ---
 layout: page
 title: About Me
+permalink: Bio
 ---
 
 ![Artistic Image of Skyler]({{site.url}}{{site.baseurl}}/images/DigitalArt.jpeg){:class="img-responsive"}

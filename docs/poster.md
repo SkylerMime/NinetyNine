@@ -1,6 +1,7 @@
 ---
 layout: page
 title: My Poster
+permalink: Poster
 ---
 
 This is the poster I created for the showcase:
