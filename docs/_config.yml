@@ -9,7 +9,7 @@ permalink: pretty
 title: Ninety-Nine Capstone
 email: skylera@duck.com
 tagline: "CSUCI Capstone Project"
-description: 'A Pygame implementation of the card game Ninety-Nine. Created by <a href=GitHub.com/SkylerMime target="_blank">Skyler Atchison</a>'
+description: 'A Pygame implementation of the card game Ninety-Nine. Created by <a href=https://GitHub.com/SkylerMime target="_blank">Skyler Atchison</a>'
 domain: skylermime.github.io
 url: https://skylermime.github.io
 baseurl: /NinetyNine
