@@ -131,6 +131,7 @@ TEXTVIEW_COLOR = WHITE
 TEXTVIEW_TEXT_COLOR = BLACK
 
 MILLISECONDS_BETWEEN_PLAYS = 900
+TICKS_TO_REACH = 80
 # If this number is too high, the system could crash
 FRAMES_PER_SECOND = 120
 
@@ -601,7 +602,7 @@ def display_final_scores(screen, final_state, clock):
 
 
 def get_movement_vector_toward(
-    initial_pos: CardVector, final_pos: CardVector, ticks_to_reach = 100
+    initial_pos: CardVector, final_pos: CardVector, ticks_to_reach = TICKS_TO_REACH
 ):
     tip_to_tail: CardVector = final_pos - initial_pos
     return tip_to_tail / ticks_to_reach
