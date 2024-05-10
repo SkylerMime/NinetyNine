@@ -4,7 +4,7 @@ title: About Me
 permalink: Bio
 ---
 
-![Artistic Image of Skyler]({{site.url}}{{site.baseurl}}/images/DigitalArt.jpeg){:class="img-responsive"}
+![Artistic Image of Skyler]({{site.url}}{{site.baseurl}}/assets/DigitalArt.jpeg){:class="img-responsive"}
 _Image credit: [@sierra_upsidedown](https://instagram.com/sierra_upsidedown)_
 
 I am a recent graduate of California State University Channel Islands,
