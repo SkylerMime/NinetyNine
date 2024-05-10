@@ -157,8 +157,8 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# PyCharm settings
+# IDE settings
 .idea/
-
-# Vscode settings
 .vscode/
+settings.json
+pyrightconfig.json

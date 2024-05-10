@@ -67,12 +67,12 @@ TEXTVIEW_HEIGHT = 90
 TEXTVIEW_TOP = 10
 TEXTVIEW_LEFT = WINDOW_WIDTH - TEXTVIEW_WIDTH - 10
 
-BID_MESSAGE_WIDTH = 90
+BID_MESSAGE_WIDTH = 110
 BID_MESSAGE_HEIGHT = 90
 BID_MESSAGE_TOP = 110
 BID_MESSAGE_LEFT = WINDOW_WIDTH - BID_MESSAGE_WIDTH - 10
 
-TRICKS_TAKEN_MESSAGE_WIDTH = 90
+TRICKS_TAKEN_MESSAGE_WIDTH = 190
 TRICKS_TAKEN_MESSAGE_HEIGHT = 90
 TRICKS_TAKEN_MESSAGE_TOP = WINDOW_HEIGHT - TRICKS_TAKEN_MESSAGE_HEIGHT - 10
 TRICKS_TAKEN_MESSAGE_LEFT = WINDOW_WIDTH - TRICKS_TAKEN_MESSAGE_WIDTH - 10
@@ -151,7 +151,8 @@ class TextView:
             message = self.message
         else:
             self.message = message
-        self.rendered_text = pygame.font.SysFont("Arial", 35).render(
+        font = pygame.font.SysFont("Arial", 35)
+        self.rendered_text = font.render(
             message, True, self.text_color, self.bg_color
         )
 
@@ -260,7 +261,7 @@ def main():
         )
         bid_message.bg_color = TEXTVIEW_COLOR
         bid_message.text_color = TEXTVIEW_TEXT_COLOR
-        bid_message.render_message(f"{0}")
+        bid_message.render_message(f"Bid: {0}")
 
         tricks_taken_message = TextView()
         tricks_taken_message.rect = pygame.Rect(
@@ -271,7 +272,7 @@ def main():
         )
         tricks_taken_message.bg_color = TEXTVIEW_COLOR
         tricks_taken_message.text_color = TEXTVIEW_TEXT_COLOR
-        tricks_taken_message.render_message(f"{0}")
+        tricks_taken_message.render_message(f"Taken: {0}")
 
         sorted_hand = game_display.get_sorted_cards(human_player.hand)
         clickable_hand = get_clickable_cards(sorted_hand, images_dict)
@@ -370,7 +371,7 @@ def do_bidding_loop(
                         list(human_player.bid), images_dict
                     )
                     new_bid_amount = game.bid_value(clickable_bid)
-                    bid_message.render_message(f"{new_bid_amount}")
+                    bid_message.render_message(f"Bid: {new_bid_amount}")
                     center_cards(clickable_hand)
                     center_cards(clickable_bid, BID_TOP)
 
@@ -524,7 +525,7 @@ def do_playing_loop(
 
         if tricks_taken_message:
             tricks_taken = game_state.PLAYERS[HUMAN_PLAYER_NUM].tricks_won
-            tricks_taken_message.render_message(f"{tricks_taken}")
+            tricks_taken_message.render_message(f"Taken: {tricks_taken}")
 
         # render graphics here
         screen.fill(BACKGROUND_COLOR)
